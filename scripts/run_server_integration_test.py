@@ -32,9 +32,9 @@ def is_readable_directory(directory: str) -> bool:
 
 def assert_readable_directory(directory: str) -> None:
     if not os.path.isdir(directory):
-        raise Exception("{} is not a valid directory.".format(directory))
+        raise Exception(f"{directory} is not a valid directory.")
     if not os.access(directory, os.R_OK):
-        raise Exception("{} is not a readable directory.".format(directory))
+        raise Exception(f"{directory} is not a readable directory.")
 
 
 def extract_typeshed(typeshed_zip_path: str, base_directory: str) -> str:
@@ -166,7 +166,7 @@ class Repository:
 
     def __next__(self):
         self._current_commit = self._commits_list.__next__()
-        LOG.info("Moving to commit named: %s" % self._current_commit)
+        LOG.info(f"Moving to commit named: {self._current_commit}")
 
         # Last empty path is needed to terminate the path with a directory separator.
         original_path = os.path.join(
@@ -246,9 +246,9 @@ def run_integration_test(
             print(repository.run_pyre("rage"), file=sys.stderr)
             LOG.error("Found discrepancies between incremental and complete checks!")
             for revision, (actual_error, expected_error) in discrepancies.items():
-                print("Difference found for revision: {}".format(revision))
-                print("Actual errors (pyre incremental): {}".format(actual_error))
-                print("Expected errors (pyre check): {}".format(expected_error))
+                print(f"Difference found for revision: {revision}")
+                print(f"Actual errors (pyre incremental): {actual_error}")
+                print(f"Expected errors (pyre check): {expected_error}")
             return 1
 
     return 0
@@ -305,8 +305,8 @@ def run_saved_state_test(typeshed_zip_path: str, repository_path: str) -> int:
 
     if actual_errors != expected_errors:
         LOG.error("Actual errors are not equal to expected errors.")
-        print("Actual errors (pyre incremental): {}".format(actual_errors))
-        print("Expected errors (pyre check): {}".format(expected_errors))
+        print(f"Actual errors (pyre incremental): {actual_errors}")
+        print(f"Expected errors (pyre check): {expected_errors}")
         return 1
     return 0
 
@@ -347,7 +347,7 @@ def run(repository_location: str, typeshed_zip_path: Optional[str], debug: bool)
             LOG.error("Exception raised in integration test:\n %s \nretrying...", e)
             # Retry the integration test for uncaught exceptions. Caught issues will
             # result in an exit code of 1.
-            retries = retries - 1
+            retries -= 1
     return 1
 
 

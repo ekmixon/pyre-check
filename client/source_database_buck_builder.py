@@ -52,7 +52,7 @@ def _buck(
 def _get_buck_query_arguments(
     specifications: List[str], mode: Optional[str]
 ) -> List[str]:
-    mode_sublist = ["@mode/" + mode] if mode is not None else []
+    mode_sublist = [f"@mode/{mode}"] if mode is not None else []
     return [
         "query",
         "--json",
@@ -72,7 +72,7 @@ def _get_buck_query_arguments(
 
 
 def _normalize_specification(specification: str) -> str:
-    return specification if "//" in specification else "//" + specification
+    return specification if "//" in specification else f"//{specification}"
 
 
 def _ignore_target(target: str) -> bool:
@@ -91,7 +91,7 @@ def _load_json_ignoring_extra_data(source: str) -> Dict[str, str]:
         if match is None:
             raise exception
 
-        line_number = int(match.group(1))
+        line_number = int(match[1])
         source_without_extra_data = "\n".join(source.splitlines()[: line_number - 1])
         return json.loads(source_without_extra_data)
 
@@ -120,7 +120,7 @@ def _get_buck_build_arguments(mode: Optional[str], targets: List[str]) -> List[s
     # `-c fbcode.py_version=3 -c fbcode.platform=platform007` to force everything
     # onto a consistent set of platforms, but this has a cost of invalidating the
     # parser cache, which may not be worth it.
-    mode_sublist = ["@mode/" + mode] if mode is not None else []
+    mode_sublist = [f"@mode/{mode}"] if mode is not None else []
     return [
         *mode_sublist,
         "--show-full-json-output",

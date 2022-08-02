@@ -37,9 +37,9 @@ def readable_directory(directory: str) -> str:
 
 def assert_writable_directory(directory: str) -> None:
     if not os.path.isdir(directory):
-        raise EnvironmentException("{} is not a valid directory.".format(directory))
+        raise EnvironmentException(f"{directory} is not a valid directory.")
     if not os.access(directory, os.W_OK):
-        raise EnvironmentException("{} is not a writable directory.".format(directory))
+        raise EnvironmentException(f"{directory} is not a writable directory.")
 
 
 def writable_directory(path: str) -> str:
@@ -58,10 +58,7 @@ def translate_path(root: str, path: str) -> str:
         return path
 
     translated = os.path.join(root, path)
-    if os.path.exists(translated):
-        return os.path.realpath(translated)
-
-    return path
+    return os.path.realpath(translated) if os.path.exists(translated) else path
 
 
 def expand_relative_path(root: str, path: str) -> str:
@@ -77,9 +74,11 @@ def translate_paths(paths: Set[str], original_directory: str) -> Set[str]:
     if not original_directory.startswith(current_directory):
         return paths
     translation = os.path.relpath(original_directory, current_directory)
-    if not translation:
-        return paths
-    return {translate_path(translation, path) for path in paths}
+    return (
+        {translate_path(translation, path) for path in paths}
+        if translation
+        else paths
+    )
 
 
 def exists(path: str) -> str:
@@ -102,9 +101,9 @@ def find_paths_with_extensions(root: str, extensions: Iterable[str]) -> List[str
     root = os.path.abspath(root)  # Return absolute paths.
     extension_filter = []
     for extension in extensions:
-        if len(extension_filter) > 0:
+        if extension_filter:
             extension_filter.append("-or")
-        extension_filter.extend(["-name", "*.{}".format(extension)])
+        extension_filter.extend(["-name", f"*.{extension}"])
 
     output = (
         subprocess.check_output(
@@ -252,7 +251,4 @@ def do_nothing() -> Generator[None, None, None]:
 def acquire_lock_if_needed(
     lock_path: str, blocking: bool, needed: bool
 ) -> ContextManager[Optional[int]]:
-    if needed:
-        return acquire_lock(lock_path, blocking)
-    else:
-        return do_nothing()
+    return acquire_lock(lock_path, blocking) if needed else do_nothing()

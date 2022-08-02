@@ -37,9 +37,7 @@ class Stop(Command):
         self._from_restart = from_restart
 
     def _flags(self) -> List[str]:
-        flags = []
-        flags.extend(["-log-directory", self._configuration.log_directory])
-        return flags
+        return ["-log-directory", self._configuration.log_directory]
 
     def _pid_file(self) -> Optional[int]:
         try:

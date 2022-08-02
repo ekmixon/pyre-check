@@ -8,12 +8,12 @@ from django.http import HttpRequest
 
 def concatenate_lhs(request: HttpRequest):
     source = request.GET["bad"]
-    return source + "A"
+    return f"{source}A"
 
 
 def concatenate_rhs(request: HttpRequest):
     source = request.GET["bad"]
-    return "A" + source
+    return f"A{source}"
 
 
 def bad_1(request: HttpRequest):

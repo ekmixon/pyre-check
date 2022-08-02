@@ -35,18 +35,14 @@ class SocketConnection:
             return self
         except OSError as error:
             raise SocketException(
-                "Failed to connect to server at `{}`. Reason: `{}`".format(
-                    socket_path, error
-                )
+                f"Failed to connect to server at `{socket_path}`. Reason: `{error}`"
             )
 
     def perform_handshake(self, version_hash: str) -> None:
         try:
             json_rpc.perform_handshake(self.input, self.output, version_hash)
         except (OSError, ValueError) as error:
-            raise SocketException(
-                "Exception encountered during handshake: `{}`".format(error)
-            )
+            raise SocketException(f"Exception encountered during handshake: `{error}`")
 
     def send(self, request: json_rpc.Request) -> None:
         if not json_rpc.write_lsp_request(self.output, request):

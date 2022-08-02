@@ -75,9 +75,7 @@ class Setup(NamedTuple):
     def compiler_override(self) -> Optional[str]:
         if self.development:
             return DEVELOPMENT_COMPILER
-        if self.release:
-            return RELEASE_COMPILER
-        return None
+        return RELEASE_COMPILER if self.release else None
 
     @property
     def compiler(self) -> str:
@@ -85,10 +83,7 @@ class Setup(NamedTuple):
 
     @property
     def make_arguments(self) -> str:
-        if self.release:
-            return "release"
-        else:
-            return "dev"
+        return "release" if self.release else "dev"
 
     @property
     def environment_variables(self) -> Mapping[str, str]:
@@ -249,10 +244,7 @@ class Setup(NamedTuple):
             cwd=current_working_directory,
             env=environment_variables,
         )
-        if output.endswith("\n"):
-            return output[:-1]
-        else:
-            return output
+        return output[:-1] if output.endswith("\n") else output
 
 
 def _make_opam_root(local: bool, temporary_root: bool, default: Optional[Path]) -> Path:
@@ -264,9 +256,7 @@ def _make_opam_root(local: bool, temporary_root: bool, default: Optional[Path]) 
             local_opam.mkdir(parents=True)
             local_opam.symlink_to(home_opam, target_is_directory=True)
         return home_opam
-    if temporary_root:
-        return Path(mkdtemp())
-    return default or home_opam
+    return Path(mkdtemp()) if temporary_root else default or home_opam
 
 
 def setup(runner_type: Type[Setup]) -> None:
@@ -301,8 +291,7 @@ def setup(runner_type: Type[Setup]) -> None:
     )
     if parsed.configure:
         runner.produce_dune_file(pyre_directory, parsed.build_type)
-        compiler_override = runner.compiler_override
-        if compiler_override:
+        if compiler_override := runner.compiler_override:
             runner.run(
                 [
                     "opam",

@@ -50,8 +50,7 @@ def _parse_paths(paths: List[Path]) -> List[Path]:
     for path in paths:
         if path.is_dir():
             parsed_directory_paths = _get_paths(path)
-            for path in parsed_directory_paths:
-                parsed_paths.append(path)
+            parsed_paths.extend(iter(parsed_directory_paths))
         else:
             parsed_paths.append(path)
     return parsed_paths
@@ -78,10 +77,10 @@ class FileCoverage:
 
 
 def _collect_coverage(modules: Mapping[str, cst.Module]) -> List[FileCoverage]:
-    coverage = []
-    for path, module in modules.items():
-        coverage.append(collect_coverage_for_module(path, module))
-    return coverage
+    return [
+        collect_coverage_for_module(path, module)
+        for path, module in modules.items()
+    ]
 
 
 class Coverage(Command):

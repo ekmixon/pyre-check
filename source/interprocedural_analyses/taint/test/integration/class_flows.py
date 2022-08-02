@@ -60,10 +60,11 @@ def global_class_attribute_issue() -> None:
 class HasClassmethods:
     @classmethod
     def _async_results_for_non_empty_query_from_db(cls, locale: str):
-        if not locale:
-            emojis = cls._get_single_word_results(locale)
-        else:
-            emojis = cls._get_multi_word_results(locale)
+        emojis = (
+            cls._get_multi_word_results(locale)
+            if locale
+            else cls._get_single_word_results(locale)
+        )
 
     @classmethod
     def _get_multi_word_results(cls, locale: str):
@@ -82,7 +83,7 @@ def test():
 class HasDecoratedClassmethod:
     @classmethod
     @contextmanager
-    def to_sink(self, x):
+    def to_sink(cls, x):
         _test_sink(x)
 
 

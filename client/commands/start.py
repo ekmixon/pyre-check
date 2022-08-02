@@ -128,16 +128,14 @@ class Start(Reporting):
                 os.path.dirname(save_initial_state_to)
             ):
                 flags.extend(["-save-initial-state-to", save_initial_state_to])
-            saved_state_project = self._command_arguments.saved_state_project
-            if saved_state_project:
+            if saved_state_project := self._command_arguments.saved_state_project:
                 flags.extend(["-saved-state-project", saved_state_project])
                 relative_local_root = self._configuration.relative_local_root
                 if relative_local_root is not None:
                     flags.extend(
                         ["-saved-state-metadata", relative_local_root.replace("/", "$")]
                     )
-            configuration_file_hash = self._configuration.file_hash
-            if configuration_file_hash:
+            if configuration_file_hash := self._configuration.file_hash:
                 flags.extend(["-configuration-file-hash", configuration_file_hash])
             load_initial_state_from = self._command_arguments.load_initial_state_from
             changed_files_path = self._command_arguments.changed_files_path
@@ -160,13 +158,12 @@ class Start(Reporting):
             ]
         )
 
-        search_path = [
+        if search_path := [
             search_path.command_line_argument()
             for search_path in (
                 self._configuration.expand_and_get_existent_search_paths()
             )
-        ]
-        if search_path:
+        ]:
             flags.extend(["-search-path", ",".join(search_path)])
 
         excludes = self._configuration.excludes

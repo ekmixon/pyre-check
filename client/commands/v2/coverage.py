@@ -30,10 +30,7 @@ def find_root_path(
     configuration: configuration_module.Configuration, working_directory: Path
 ) -> Path:
     local_root = configuration.local_root
-    if local_root is not None:
-        return Path(local_root)
-
-    return working_directory
+    return Path(local_root) if local_root is not None else working_directory
 
 
 def collect_coverage_for_path(

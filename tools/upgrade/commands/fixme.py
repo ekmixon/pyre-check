@@ -66,10 +66,9 @@ class Fixme(ErrorSuppressingCommand):
             errors = self._generate_errors()
             self._apply_suppressions(errors)
 
-            if self._lint:
-                if self._repository.format():
-                    errors = self._generate_errors()
-                    self._apply_suppressions(errors)
+            if self._lint and self._repository.format():
+                errors = self._generate_errors()
+                self._apply_suppressions(errors)
         else:
             errors = Errors.from_stdin(self._only_fix_error_code)
             self._apply_suppressions(errors)

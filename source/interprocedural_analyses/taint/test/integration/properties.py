@@ -27,10 +27,7 @@ class Class:
         return self.my_property
 
     def uses_other(self, other: Optional[Class]):
-        if other:
-            return other.my_property
-        else:
-            return None
+        return other.my_property if other else None
 
 
 class Derived(Class):
@@ -122,7 +119,7 @@ def setters_are_simulated() -> None:
 
 class ClassProperty:
     @classproperty
-    def my_class_property(cls) -> str:
+    def my_class_property(self) -> str:
         return ""
 
 

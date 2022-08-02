@@ -136,7 +136,7 @@ class LegacyError:
             key = self._key_with_color()
         else:
             key = self.__key()
-        return key + " " + self.error.description
+        return f"{key} {self.error.description}"
 
     def __key(self) -> str:
         return f"{self.error.path}:{self.error.line}:{self.error.column}"
@@ -157,14 +157,18 @@ class LegacyError:
         )
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, LegacyError):
-            return False
-        return self.__key() == other.__key()
+        return (
+            self.__key() == other.__key()
+            if isinstance(other, LegacyError)
+            else False
+        )
 
     def __lt__(self, other: object) -> bool:
-        if not isinstance(other, LegacyError):
-            return False
-        return self.__key() < other.__key()
+        return (
+            self.__key() < other.__key()
+            if isinstance(other, LegacyError)
+            else False
+        )
 
     def __hash__(self) -> int:
         return hash(self.__key())

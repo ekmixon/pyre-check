@@ -103,13 +103,11 @@ def _filter_taint_tree(
 ) -> List[Dict[str, Any]]:
     new_taint_tree = []
     for taint in taint_tree:
-        new_taint_taint = [
+        if new_taint_taint := [
             flow_details
             for flow_details in taint["taint"]
             if predicate(taint["port"], flow_details)
-        ]
-
-        if len(new_taint_taint) > 0:
+        ]:
             new_taint = taint.copy()
             new_taint["taint"] = new_taint_taint
             new_taint_tree.append(new_taint)

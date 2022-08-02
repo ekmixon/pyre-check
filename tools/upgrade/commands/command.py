@@ -150,11 +150,10 @@ class ErrorSuppressingCommand(Command):
         if not configuration.is_local:
             return
         if upgrade_version:
-            if configuration.version:
-                configuration.remove_version()
-                configuration.write()
-            else:
+            if not configuration.version:
                 return
+            configuration.remove_version()
+            configuration.write()
         errors = (
             Errors.from_stdin(only_fix_error_code)
             if error_source == ErrorSource.STDIN and not upgrade_version
@@ -166,9 +165,8 @@ class ErrorSuppressingCommand(Command):
             self._apply_suppressions(errors)
 
             # Lint and re-run pyre once to resolve most formatting issues
-            if self._lint:
-                if self._repository.format():
-                    errors = configuration.get_errors(
-                        only_fix_error_code, should_clean=False
-                    )
-                    self._apply_suppressions(errors)
+            if self._lint and self._repository.format():
+                errors = configuration.get_errors(
+                    only_fix_error_code, should_clean=False
+                )
+                self._apply_suppressions(errors)

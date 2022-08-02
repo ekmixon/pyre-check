@@ -44,11 +44,12 @@ class InspectParserTest(unittest.TestCase):
     def test_inherited_methods(self) -> None:
         self.assertEqual(
             extract_qualified_name(TestClass.method),
-            "{}.TestClass.method".format(__name__),
+            f"{__name__}.TestClass.method",
         )
+
         self.assertEqual(
             extract_qualified_name(TestDerived.method),
-            "{}.TestClass.method".format(__name__),
+            f"{__name__}.TestClass.method",
         )
 
     def test_extract_parameters(self) -> None:

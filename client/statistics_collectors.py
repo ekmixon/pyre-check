@@ -33,10 +33,10 @@ class FunctionAnnotationKind(Enum):
         is_method_or_classmethod: bool,
         parameters: Sequence[cst.Param],
     ) -> "FunctionAnnotationKind":
-        if is_return_annotated and annotated_parameter_count == len(parameters):
-            return FunctionAnnotationKind.FULLY_ANNOTATED
-
         if is_return_annotated:
+            if annotated_parameter_count == len(parameters):
+                return FunctionAnnotationKind.FULLY_ANNOTATED
+
             return FunctionAnnotationKind.PARTIALLY_ANNOTATED
 
         has_untyped_self_parameter = is_method_or_classmethod and (
@@ -136,10 +136,12 @@ class AnnotationCollector(cst.CSTVisitor):
     def visit_FunctionDef(self, node: cst.FunctionDef) -> None:
         for decorator in node.decorators:
             decorator_node = decorator.decorator
-            if isinstance(decorator_node, cst.Name):
-                if decorator_node.value == "staticmethod":
-                    self.static_function_definition_depth += 1
-                    break
+            if (
+                isinstance(decorator_node, cst.Name)
+                and decorator_node.value == "staticmethod"
+            ):
+                self.static_function_definition_depth += 1
+                break
         self.function_definition_depth += 1
 
         if node.returns is None:
@@ -179,31 +181,26 @@ class AnnotationCollector(cst.CSTVisitor):
         self.function_definition_depth -= 1
         for decorator in original_node.decorators:
             decorator_node = decorator.decorator
-            if isinstance(decorator_node, cst.Name):
-                if decorator_node.value == "staticmethod":
-                    self.static_function_definition_depth -= 1
-                    break
+            if (
+                isinstance(decorator_node, cst.Name)
+                and decorator_node.value == "staticmethod"
+            ):
+                self.static_function_definition_depth -= 1
+                break
 
     def visit_Assign(self, node: cst.Assign) -> None:
         if self.in_function_definition():
             return
-        implicitly_annotated_literal = False
-        if isinstance(node.value, cst.BaseNumber) or isinstance(
-            node.value, cst.BaseString
-        ):
-            implicitly_annotated_literal = True
-        implicitly_annotated_value = False
-        if isinstance(node.value, cst.Name) or isinstance(node.value, cst.Call):
-            # An over-approximation of global values that do not need an explicit
-            # annotation. Erring on the side of reporting these as annotated to
-            # avoid showing false positives to users.
-            implicitly_annotated_value = True
+        implicitly_annotated_literal = isinstance(
+            node.value, (cst.BaseNumber, cst.BaseString)
+        )
+
+        implicitly_annotated_value = isinstance(node.value, (cst.Name, cst.Call))
         code_range = self._code_range(node)
+        is_annotated = implicitly_annotated_literal or implicitly_annotated_value
         if self.in_class_definition():
-            is_annotated = implicitly_annotated_literal or implicitly_annotated_value
             self.attributes.append(AnnotationInfo(node, is_annotated, code_range))
         else:
-            is_annotated = implicitly_annotated_literal or implicitly_annotated_value
             self.globals.append(AnnotationInfo(node, is_annotated, code_range))
 
     def visit_AnnAssign(self, node: cst.AnnAssign) -> None:
@@ -286,10 +283,8 @@ class CountCollector(StatisticsCollector):
         self.regex: Pattern[str] = compile(regex)
 
     def visit_Comment(self, node: cst.Comment) -> None:
-        match = self.regex.match(node.value)
-        if match:
-            code_group = match.group(1)
-            if code_group:
+        if match := self.regex.match(node.value):
+            if code_group := match.group(1):
                 codes = code_group.strip("[] ").split(",")
             else:
                 codes = ["No Code"]

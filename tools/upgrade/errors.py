@@ -279,7 +279,7 @@ def _remove_comment_preamble(lines: List[str]) -> None:
 
 def _add_error_to_line_break_block(lines: List[str], errors: List[List[str]]) -> None:
     # Gather unbroken lines.
-    line_break_block = [lines.pop() for _ in range(0, len(errors))]
+    line_break_block = [lines.pop() for _ in range(len(errors))]
     line_break_block.reverse()
 
     # Transform line break block to use parenthesis.
@@ -319,15 +319,15 @@ def _split_across_lines(
         ):
             # This new token would make the line exceed the limit,
             # hence terminate what we have accumulated.
-            result.append(("{}{}".format(prefix, buffered_line)).rstrip())
+            result.append(f"{prefix}{buffered_line}".rstrip())
             # The first line already has a comment token on it, so don't prefix #. For
             # the rest, we need to add the comment symbol manually.
-            prefix = "{}#  ".format(" " * indent)
+            prefix = f'{" " * indent}#  '
             buffered_line = ""
 
         buffered_line = buffered_line + token + " "
 
-    result.append(("{}{}".format(prefix, buffered_line)).rstrip())
+    result.append(f"{prefix}{buffered_line}".rstrip())
     return result
 
 
@@ -343,13 +343,11 @@ def _get_unused_ignore_codes(errors: List[Dict[str, str]]) -> List[int]:
     unused_ignore_codes: List[int] = []
     ignore_errors = [error for error in errors if error["code"] == "0"]
     for error in ignore_errors:
-        match = re.search(
-            r"The `pyre-ignore\[(.*?)\]` or `pyre-fixme\[.*?\]`", error["description"]
-        )
-        if match:
-            unused_ignore_codes.extend(
-                [int(code.strip()) for code in match.group(1).split(",")]
-            )
+        if match := re.search(
+            r"The `pyre-ignore\[(.*?)\]` or `pyre-fixme\[.*?\]`",
+            error["description"],
+        ):
+            unused_ignore_codes.extend([int(code.strip()) for code in match[1].split(",")])
     unused_ignore_codes.sort()
     return unused_ignore_codes
 
@@ -363,7 +361,7 @@ def _remove_unused_ignores(line: str, errors: List[Dict[str, str]]) -> str:
 
     # One or more codes are specified in the ignore comment.
     # Remove only the codes that are erroring as unused.
-    ignore_codes_string = match.group(2)
+    ignore_codes_string = match[2]
     ignore_codes = [int(code.strip()) for code in ignore_codes_string.split(",")]
     remaining_ignore_codes = set(ignore_codes) - set(unused_ignore_codes)
     if len(remaining_ignore_codes) == 0 or len(unused_ignore_codes) == 0:
@@ -473,7 +471,7 @@ def _lines_after_suppressing_errors(
             line_break_block_errors.append(comments)
             comments = []
 
-        if len(comments) > 0:
+        if comments:
             LOG.info(
                 "Adding comment%s on line %d: %s",
                 "s" if len(comments) > 1 else "",
@@ -569,13 +567,13 @@ def _error_to_fixme_comment_lines(
     if error["code"] == "0":
         return []
 
-    description = custom_comment if custom_comment else error["description"]
-    comment = "{}# pyre-fixme[{}]: {}".format(" " * indent, error["code"], description)
+    description = custom_comment or error["description"]
+    comment = f'{" " * indent}# pyre-fixme[{error["code"]}]: {description}'
 
     if not max_line_length:
         return [comment]
 
-    truncated_comment = comment[: (max_line_length - 3)] + "..."
+    truncated_comment = f"{comment[: (max_line_length - 3)]}..."
     split_comment_lines = _split_across_lines(comment, indent, max_line_length)
     should_truncate = (
         truncate
@@ -590,13 +588,7 @@ def _build_error_map(
 ) -> Dict[int, List[Dict[str, str]]]:
     error_map = defaultdict(lambda: [])
     for error in errors:
-        if error["concise_description"]:
-            description = error["concise_description"]
-        else:
-            description = error["description"]
-        match = re.search(r"\[(\d+)\]: (.*)", description)
-        if match:
-            error_map[error["line"]].append(
-                {"code": match.group(1), "description": match.group(2)}
-            )
+        description = error["concise_description"] or error["description"]
+        if match := re.search(r"\[(\d+)\]: (.*)", description):
+            error_map[error["line"]].append({"code": match[1], "description": match[2]})
     return error_map

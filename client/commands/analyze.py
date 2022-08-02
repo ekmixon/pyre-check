@@ -83,35 +83,28 @@ class Analyze(Check):
         if self._taint_models_path:
             for path in self._taint_models_path:
                 flags.extend(["-taint-models", path])
-        save_results_to = self._save_results_to
-        if save_results_to:
+        if save_results_to := self._save_results_to:
             flags.extend(["-save-results-to", save_results_to])
-        dump_call_graph = self._dump_call_graph
-        if dump_call_graph:
+        if dump_call_graph := self._dump_call_graph:
             flags.extend(["-dump-call-graph", dump_call_graph])
         if self._no_verify:
             flags.append("-no-verify")
-        repository_root = self._repository_root
-        if repository_root:
+        if repository_root := self._repository_root:
             flags.extend(["-repository-root", repository_root])
         rules = self._rules
         if rules is not None:
             flags.extend(["-rules", ",".join(str(rule) for rule in rules)])
-        find_missing_flows = self._find_missing_flows
-        if find_missing_flows:
+        if find_missing_flows := self._find_missing_flows:
             flags.extend(["-find-missing-flows", find_missing_flows.value])
-        dump_model_query_results = self._dump_model_query_results
-        if dump_model_query_results:
+        if dump_model_query_results := self._dump_model_query_results:
             flags.extend(["-dump-model-query-results", dump_model_query_results])
         if self._use_cache:
             flags.append("-use-cache")
         if self._inline_decorators:
             flags.append("-inline-decorators")
-        maximum_trace_length = self._maximum_trace_length
-        if maximum_trace_length:
+        if maximum_trace_length := self._maximum_trace_length:
             flags.extend(["-maximum-trace-length", str(maximum_trace_length)])
-        maximum_tito_depth = self._maximum_tito_depth
-        if maximum_tito_depth:
+        if maximum_tito_depth := self._maximum_tito_depth:
             flags.extend(["-maximum-tito-depth", str(maximum_tito_depth)])
 
         return flags

@@ -19,7 +19,7 @@ from .command_test import mock_arguments, mock_configuration
 
 
 def mock_absolute(self: Path) -> Path:
-    return Path("example/path/client/" + self.name)
+    return Path(f"example/path/client/{self.name}")
 
 
 class StatisticsTest(unittest.TestCase):
@@ -110,9 +110,10 @@ class AggregateStatisticsTest(unittest.TestCase):
     def assert_aggregate_counts(
         self, statistics: Statistics, sources: Dict[str, str], expected: Dict[str, Any]
     ) -> None:
-        source_modules = {}
-        for path, source in sources.items():
-            source_modules[path] = self.format_files(source)
+        source_modules = {
+            path: self.format_files(source) for path, source in sources.items()
+        }
+
         raw_data = statistics._collect_statistics(source_modules)
         self.assertEqual(statistics._aggregate_data(raw_data), expected)
 

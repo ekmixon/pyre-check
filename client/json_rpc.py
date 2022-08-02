@@ -342,7 +342,7 @@ def _read_payload(file: BinaryIO) -> JSON:
 
         body = file.read(length)
         return json.loads(body.decode("utf-8"))
-    except (ValueError, OSError, JSONDecodeError) as exception:
+    except (ValueError, OSError) as exception:
         raise ParseError(f"Payload reading failed: {exception}")
 
 
@@ -358,24 +358,23 @@ def perform_handshake(
     input_file: BinaryIO, output_file: BinaryIO, client_version: str
 ) -> None:
     server_handshake = read_lsp_request(input_file)
-    if server_handshake.method == "handshake/server":
-        server_handshake_parameters = server_handshake.parameters
-        if isinstance(server_handshake_parameters, ByNameParameters):
-            server_version = server_handshake_parameters.values.get("version")
-            if server_version != client_version:
-                raise ValueError(
-                    f"Version mismatch. Server has version `{server_version}`, "
-                    + f"while client has version `{client_version}`."
-                )
-            client_handshake = Request(
-                method="handshake/client",
-                parameters=ByNameParameters({"send_confirmation": True}),
-            )
-            write_lsp_request(output_file, client_handshake)
-            request = read_lsp_request(input_file)
-            if not request.method == "handshake/socket_added":
-                raise ValueError("Handshake was not successful.")
-        else:
-            raise ValueError("Handshake parameters from server not found.")
-    else:
+    if server_handshake.method != "handshake/server":
         raise ValueError("Handshake from server was malformed.")
+    server_handshake_parameters = server_handshake.parameters
+    if isinstance(server_handshake_parameters, ByNameParameters):
+        server_version = server_handshake_parameters.values.get("version")
+        if server_version != client_version:
+            raise ValueError(
+                f"Version mismatch. Server has version `{server_version}`, "
+                + f"while client has version `{client_version}`."
+            )
+        client_handshake = Request(
+            method="handshake/client",
+            parameters=ByNameParameters({"send_confirmation": True}),
+        )
+        write_lsp_request(output_file, client_handshake)
+        request = read_lsp_request(input_file)
+        if request.method != "handshake/socket_added":
+            raise ValueError("Handshake was not successful.")
+    else:
+        raise ValueError("Handshake parameters from server not found.")

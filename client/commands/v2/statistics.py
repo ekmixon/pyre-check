@@ -42,10 +42,7 @@ def find_roots(
         return {to_absolute_path(path) for path in filter_paths}
 
     local_root = configuration.local_root
-    if local_root is not None:
-        return [Path(local_root)]
-
-    return [Path.cwd()]
+    return [Path(local_root)] if local_root is not None else [Path.cwd()]
 
 
 def find_paths_to_parse(
@@ -54,11 +51,10 @@ def find_paths_to_parse(
     def _is_excluded(path: Path) -> bool:
         try:
             return any(
-                [
-                    re.match(exclude_pattern, str(path))
-                    for exclude_pattern in configuration.excludes
-                ]
+                re.match(exclude_pattern, str(path))
+                for exclude_pattern in configuration.excludes
             )
+
         except re.error:
             LOG.warning("Could not parse `excludes`: %s", configuration.excludes)
             return False
@@ -85,9 +81,9 @@ def find_paths_to_parse(
         )
 
     return itertools.chain.from_iterable(
-        _get_paths_for_file(path)
-        if not path.is_dir()
-        else _get_paths_in_directory(path)
+        _get_paths_in_directory(path)
+        if path.is_dir()
+        else _get_paths_for_file(path)
         for path in paths
     )
 
@@ -197,9 +193,8 @@ def aggregate_statistics(data: StatisticsData) -> AggregatedStatisticsData:
         "fully_annotated_function_count": 0,
         "line_count": 0,
     }
-    for annotation_data in data.annotations.values():
-        for key in aggregate_annotations.keys():
-            aggregate_annotations[key] += annotation_data[key]
+    for annotation_data, (key, value) in itertools.product(data.annotations.values(), aggregate_annotations.items()):
+        value += annotation_data[key]
 
     return AggregatedStatisticsData(
         annotations=aggregate_annotations,

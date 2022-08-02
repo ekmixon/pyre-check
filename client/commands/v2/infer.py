@@ -252,18 +252,15 @@ def sanitize_annotation(
     if dequalify_all:
         match = re.fullmatch(r"([^.]*?\.)*?([^.]+)(\[.*\])", annotation)
         if match is not None:
-            annotation = f"{match.group(2)}{match.group(3)}"
+            annotation = f"{match[2]}{match[3]}"
 
     if dequalify_typing:
         annotation = annotation.replace("typing.", "")
 
     if annotation.find("PathLike") >= 0:
-        try:
+        with contextlib.suppress(libcst._exceptions.ParserSyntaxError):
             tree = libcst.parse_module(annotation)
             annotation = tree.visit(PathLikeAnnotationFixer()).code
-        except libcst._exceptions.ParserSyntaxError:
-            pass
-
     return annotation
 
 
@@ -554,10 +551,9 @@ class ModuleAnnotations:
 
     def _imports(self) -> str:
         import_statements = self._header_imports() + self._typing_imports()
-        imports_str = (
+        return (
             "" if import_statements == [] else "\n".join(import_statements) + "\n"
         )
-        return imports_str
 
     def _class_stub(
         self,
@@ -731,10 +727,11 @@ def create_infer_arguments_and_cleanup(
 def _check_working_directory(
     working_directory: Path, global_root: Path, relative_local_root: Optional[str]
 ) -> None:
-    candidate_locations: List[str] = []
     if working_directory == global_root:
         return
-    candidate_locations.append(f"`{global_root}` with `--local-configuration` set")
+    candidate_locations: List[str] = [
+        f"`{global_root}` with `--local-configuration` set"
+    ]
 
     if relative_local_root is not None:
         local_root = global_root / relative_local_root

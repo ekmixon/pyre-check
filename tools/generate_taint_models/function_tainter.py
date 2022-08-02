@@ -61,11 +61,9 @@ def taint_pyre_functions(
     annotations: AnnotationSpecification,
     whitelist: Optional[WhitelistSpecification],
 ) -> List[PyreFunctionDefinitionModel]:
-    tainted_functions = []
-    for definition in functions_to_taint:
-        tainted_functions.append(
-            PyreFunctionDefinitionModel(
-                definition, annotations=annotations, whitelist=whitelist
-            )
+    return [
+        PyreFunctionDefinitionModel(
+            definition, annotations=annotations, whitelist=whitelist
         )
-    return tainted_functions
+        for definition in functions_to_taint
+    ]

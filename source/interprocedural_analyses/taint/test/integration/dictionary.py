@@ -8,8 +8,7 @@ from typing import Any, Dict, Generic, Iterable, Mapping, Optional, TypeVar, cas
 
 
 def dictionary_source():
-    result = {"a": _test_source()}
-    return result
+    return {"a": _test_source()}
 
 
 def dictionary_entry_sink(arg):
@@ -17,26 +16,21 @@ def dictionary_entry_sink(arg):
 
 
 def dictionary_tito(arg):
-    result = {"a": arg}
-    return result
+    return {"a": arg}
 
 
 def dictionary_assignment_source():
-    d = {}
-    d["a"] = _test_source()
+    d = {"a": _test_source()}
     return d["a"]
 
 
 def dictionary_non_source():
-    d = {}
-    d["a"] = _test_source()
+    d = {"a": _test_source()}
     return d["b"]
 
 
 def dictionary_assign_to_index():
-    d = {}
-    d["a"] = _test_source()
-    return d
+    return {"a": _test_source()}
 
 
 def dictionary_nested_assignment_1():
@@ -93,13 +87,11 @@ def tainted_setitem(d: SpecialSetitemDict) -> SpecialSetitemDict:
 
 
 def forward_comprehension_value_source():
-    d = {"a": _test_source() for x in []}
-    return d
+    return {"a": _test_source() for x in []}
 
 
 def forward_comprehension_key_source():
-    d = {_test_source(): 0 for x in []}
-    return d
+    return {_test_source(): 0 for x in []}
 
 
 def forward_comprehension_value_sink(arg):
@@ -111,7 +103,10 @@ def forward_comprehension_key_sink(arg):
 
 
 def lists_of_dictionary_iteration_is_precise():
-    list_of_dicts = [{"with_feature": _test_source(), "without_feature": 0} for x in []]
+    list_of_dicts = [
+        {"with_feature": _test_source(), "without_feature": 0} for _ in []
+    ]
+
     for dict in list_of_dicts:
         _test_sink(dict["with_feature"])
         _test_sink(dict["without_feature"])
@@ -124,10 +119,7 @@ def reassignment_removes_backwards_taint(d):
 
 def copy_untainted_values_with_tainted_keys():
     d = {_test_source(): 1}
-    values_not_tainted = {}
-    for key in d:
-        values_not_tainted[key] = d[key]
-    return values_not_tainted
+    return {key: d[key] for key in d}
 
 
 def dict_with_tainted_key_flows_to_sink():
@@ -140,17 +132,17 @@ def sink_dictionary_through_keys(d: Dict[str, str]) -> None:
 
 
 def get_keys(d: Dict[str, str]) -> Iterable[str]:
-    return [k for k in d]
+    return list(d)
 
 
 def return_comprehension_with_tained_keys():
     d = {_test_source(): 1}
-    return [k for k in d]
+    return list(d)
 
 
 def return_comprehension_with_untainted_keys():
     d = {1: _test_source()}
-    return [k for k in d]
+    return list(d)
 
 
 def backwards_model_for_dictionary_comprehension(d) -> None:
@@ -175,9 +167,7 @@ def test_keys_and_values():
 
 
 def backwards_field_assignment(external):
-    d = {}
-    d["index"] = external
-    return d
+    return {"index": external}
 
 
 def return_tito_literally(external):
@@ -218,8 +208,7 @@ def test_service_with_mapping():
 
 
 def tito_with_index(d: Dict[str, str]) -> str:
-    result = d["a"]
-    return result
+    return d["a"]
 
 
 def test_index_from_tito():
@@ -265,4 +254,4 @@ def test_items_backward_values(x, y):
 
 def test_with_issue_in_dict_items_comprehension():
     sources = {"k": _test_source()}
-    return {k: v for k, v in sources.items()}
+    return dict(sources)

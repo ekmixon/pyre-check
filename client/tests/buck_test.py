@@ -33,7 +33,7 @@ class BuckTest(unittest.TestCase):
             buck.presumed_target_root("prefix//path/directory:target"), "path/directory"
         )
 
-    @patch("{}.find_buck_root".format(buck.__name__), return_value="/root")
+    @patch(f"{buck.__name__}.find_buck_root", return_value="/root")
     def test_find_built_source_directories(
         self, find_parent_directory_containing_file
     ) -> None:
@@ -61,9 +61,7 @@ class BuckTest(unittest.TestCase):
                     ),
                 ]
             )
-            self.assertEqual(
-                found_trees, BuckOut({"new_tree", "new_tree", "new_tree"}, set())
-            )
+            self.assertEqual(found_trees, BuckOut({"new_tree"}, set()))
             glob_glob.assert_has_calls(
                 [
                     call("/root/buck-out/targets/another#*link-tree"),
@@ -104,7 +102,7 @@ class BuckTest(unittest.TestCase):
                 any_order=True,
             )
 
-    @patch("%s.open" % buck.__name__, new_callable=mock_open, read_data="")
+    @patch(f"{buck.__name__}.open", new_callable=mock_open, read_data="")
     def test_normalize(self, mock_open) -> None:
         with patch.object(subprocess, "check_output") as buck_targets:
             buck_targets.return_value = "a b".encode("utf-8")

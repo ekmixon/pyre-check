@@ -93,9 +93,7 @@ class Query(Command):
         self.query: str = self._rewrite_paths(query)
 
     def _flags(self) -> List[str]:
-        flags = [self.query]
-        flags.extend(["-log-directory", self._configuration.log_directory])
-        return flags
+        return [self.query, *["-log-directory", self._configuration.log_directory]]
 
     def _run(self) -> None:
         if self.query == "help":

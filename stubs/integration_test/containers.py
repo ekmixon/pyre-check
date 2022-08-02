@@ -9,22 +9,19 @@ from django.http import HttpRequest
 
 
 def dictionary_update(request: HttpRequest):
-    result = {}
     source = {"source": request.GET["bad"]}
-    result.update(source)
+    result = {} | source
     eval(result)
 
 
 def list_append(request: HttpRequest):
-    l = []
-    l.append(request.GET["bad"])
+    l = [request.GET["bad"]]
     eval(l[0])
 
 
 def list_update(request: HttpRequest):
-    l = []
     tainted_list = [request.GET["bad"]]
-    l.extend(tainted_list)
+    l = list(tainted_list)
     eval(l[0])
 
 
@@ -35,8 +32,7 @@ def list_insert(request: HttpRequest):
 
 
 def set_add(request: HttpRequest):
-    s = {1}
-    s.add(request.GET["bad"])
+    s = {1, request.GET["bad"]}
     for element in s:
         eval(element)
 

@@ -201,8 +201,7 @@ class Command(CommandParser, ABC):
         if self._configuration.disabled:
             LOG.log(log.SUCCESS, "Pyre will not run due to being explicitly disabled")
         else:
-            relative_local_root = self._configuration.relative_local_root
-            if relative_local_root:
+            if relative_local_root := self._configuration.relative_local_root:
                 recently_used_configurations.Cache(
                     self._configuration.dot_pyre_directory
                 ).put(relative_local_root)
@@ -224,18 +223,14 @@ class Command(CommandParser, ABC):
             flags.extend(["-sequential"])
         if self._configuration.strict:
             flags.extend(["-strict"])
-        additional_checks = self._command_arguments.additional_checks
-        if additional_checks:
-            flags.append("-additional-checks")
-            flags.append(",".join(additional_checks))
+        if additional_checks := self._command_arguments.additional_checks:
+            flags.extend(("-additional-checks", ",".join(additional_checks)))
         if self._show_error_traces:
             flags.append("-show-error-traces")
         logging_sections = self._logging_sections
         if not self._capable_terminal or self._noninteractive:
-            # Disable progress reporting for non-capable terminals.
-            # This helps in reducing clutter.
             if logging_sections:
-                logging_sections = logging_sections + ",-progress"
+                logging_sections = f"{logging_sections},-progress"
             else:
                 logging_sections = "-progress"
         if logging_sections:
@@ -251,11 +246,9 @@ class Command(CommandParser, ABC):
             # Clear the profiling log first since in pyre binary it's append-only
             remove_if_exists(self.profiling_log_path())
         flags.extend(["-project-root", self._configuration.project_root])
-        log_identifier = self._command_arguments.log_identifier
-        if log_identifier:
+        if log_identifier := self._command_arguments.log_identifier:
             flags.extend(["-log-identifier", log_identifier])
-        logger = self._configuration.logger
-        if logger:
+        if logger := self._configuration.logger:
             flags.extend(["-logger", logger])
         flags.extend(["-log-directory", self._configuration.log_directory])
         python_version = self._configuration.get_python_version()
@@ -269,25 +262,21 @@ class Command(CommandParser, ABC):
                 str(python_version.micro),
             ]
         )
-        heap_size = self._configuration.shared_memory.heap_size
-        if heap_size:
+        if heap_size := self._configuration.shared_memory.heap_size:
             flags.extend(["-shared-memory-heap-size", str(heap_size)])
-        dependency_table_power = (
-            self._configuration.shared_memory.dependency_table_power
-        )
-        if dependency_table_power:
+        if (
+            dependency_table_power := self._configuration.shared_memory.dependency_table_power
+        ):
             flags.extend(
                 ["-shared-memory-dependency-table-power", str(dependency_table_power)]
             )
-        hash_table_power = self._configuration.shared_memory.hash_table_power
-        if hash_table_power:
+        if hash_table_power := self._configuration.shared_memory.hash_table_power:
             flags.extend(["-shared-memory-hash-table-power", str(hash_table_power)])
         return flags
 
     # temporarily always return empty list to unblock client release
     def _feature_flags(self) -> List[str]:
-        features = self._command_arguments.features
-        if features:
+        if features := self._command_arguments.features:
             lsp_features = ["click_to_fix", "hover", "go_to_definition"]
             filtered = {
                 key: value
@@ -298,9 +287,7 @@ class Command(CommandParser, ABC):
         return []
 
     def _read_stdout(self, stdout: Iterable[str]) -> None:
-        self._buffer = []
-        for line in stdout:
-            self._buffer.append(line)
+        self._buffer = list(stdout)
 
     def _call_client(
         self,
@@ -309,11 +296,12 @@ class Command(CommandParser, ABC):
         stdout: Optional[IO[str]] = None,
         check_analysis_directory: bool = True,
     ) -> Result:
-        if check_analysis_directory:
-            if not os.path.isdir(self._analysis_directory.get_root()):
-                raise EnvironmentException(
-                    f"`{self._analysis_directory.get_root()}` is not a link tree."
-                )
+        if check_analysis_directory and not os.path.isdir(
+            self._analysis_directory.get_root()
+        ):
+            raise EnvironmentException(
+                f"`{self._analysis_directory.get_root()}` is not a link tree."
+            )
 
         binary = self._configuration.get_binary_respecting_override()
         if binary is None:
@@ -430,9 +418,8 @@ class Command(CommandParser, ABC):
         return self._configuration
 
     def _enable_logging_section(self, section: str) -> None:
-        logging_sections = self._logging_sections
-        if logging_sections:
-            self._logging_sections = logging_sections + "," + section
+        if logging_sections := self._logging_sections:
+            self._logging_sections = f"{logging_sections},{section}"
         else:
             self._logging_sections = section
 

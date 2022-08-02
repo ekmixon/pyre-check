@@ -130,8 +130,9 @@ def _get_local_configuration(
     current_directory: Path, buck_root: Optional[Path]
 ) -> Dict[str, Any]:
     configuration: Dict[str, Any] = {}
-    using_targets = log.get_yes_no_input("Is your project built with Buck?")
-    if using_targets:
+    if using_targets := log.get_yes_no_input(
+        "Is your project built with Buck?"
+    ):
         targets = log.get_input(
             "Which buck target(s) should pyre analyze?\n"
             + "  Default: Analyze all targets under the configuration.\n"

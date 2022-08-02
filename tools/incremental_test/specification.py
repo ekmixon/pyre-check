@@ -293,7 +293,7 @@ class FileRepositoryUpdate(SingleUpdate):
         for handle, content in self.changes.items():
             # Need to create parent directory if it doesn't exist
             parent_path = Path(handle).parent
-            if not parent_path == Path("."):
+            if parent_path != Path("."):
                 environment.checked_run(
                     working_directory=working_directory,
                     command=f"mkdir -p {parent_path}",

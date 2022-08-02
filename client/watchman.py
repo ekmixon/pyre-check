@@ -102,16 +102,16 @@ class Subscriber:
             os.makedirs(self._base_path)
         except OSError:
             pass
-        lock_path: str = os.path.join(self._base_path, "{}.lock".format(self._name))
+        lock_path: str = os.path.join(self._base_path, f"{self._name}.lock")
         LOG.debug(f"Subscriber: Trying to acquire lock file {lock_path}.")
 
         # Die silently if unable to acquire the lock.
         try:
             with acquire_lock(lock_path, blocking=False), (
-                Process.register_unique_process(
-                    os.getpid(), compute_pid_path(self._base_path, self._name)
-                )
-            ):
+                        Process.register_unique_process(
+                            os.getpid(), compute_pid_path(self._base_path, self._name)
+                        )
+                    ):
                 LOG.debug(f"Acquired lock on {lock_path}")
                 file_handler = logging.handlers.RotatingFileHandler(
                     os.path.join(self._base_path, f"{self._name}.log"),
@@ -146,14 +146,13 @@ class Subscriber:
                     # This call is blocking, which prevents this loop from burning CPU.
                     response = connection.receive()
                     if response.get("is_fresh_instance", False):
-                        if not self._ready:
-                            root = response.get("root", "<no-root-found>")
-                            self._ready = True
-                            LOG.info(
-                                f"Ignoring initial is_fresh_instance message for {root}"
-                            )
-                        else:
+                        if self._ready:
                             raise WatchmanRestartedException()
+                        root = response.get("root", "<no-root-found>")
+                        self._ready = True
+                        LOG.info(
+                            f"Ignoring initial is_fresh_instance message for {root}"
+                        )
                     else:
                         self._handle_response(response)
         finally:

@@ -99,8 +99,8 @@ class ConfigurationMonitor(Subscriber):
         ).run()
 
     def _handle_response(self, response: Dict[str, Any]) -> None:
-        watchman_root = response.get("root", None)
-        paths = response.get("files", None)
+        watchman_root = response.get("root")
+        paths = response.get("files")
         if watchman_root is None or paths is None:
             # Skip the Watchman response because it does not have both `root`
             # and `files`.

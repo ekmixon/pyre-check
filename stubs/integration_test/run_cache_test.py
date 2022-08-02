@@ -50,7 +50,7 @@ def run_test_no_cache(
 ) -> None:
     # Run Pysa without the cache argument.
     logging.info("Testing with no --use-cache flag:")
-    result = run_and_check_output(
+    if result := run_and_check_output(
         [
             "pyre",
             "--typeshed",
@@ -60,8 +60,7 @@ def run_test_no_cache(
         ],
         expected,
         "result.no_cache",
-    )
-    if result:
+    ):
         logging.info("Run produced expected results\n")
     else:
         sys.exit(1)
@@ -79,7 +78,7 @@ def run_test_cache_first_and_second_runs(
     # Run Pysa with the cache argument for the first time. This should create
     # the cache file and save state to it since the file doesn't exist already.
     logging.info("Testing behavior with --use-cache flag on initial run:")
-    result = run_and_check_output(
+    if result := run_and_check_output(
         [
             "pyre",
             "--typeshed",
@@ -90,8 +89,7 @@ def run_test_cache_first_and_second_runs(
         ],
         expected,
         "result.cache1",
-    )
-    if result:
+    ):
         logging.info("Run produced expected results\n")
     else:
         sys.exit(1)
@@ -99,7 +97,7 @@ def run_test_cache_first_and_second_runs(
     # Run Pysa with the cache argument for the second time. Since the file
     # exists, Pysa should load the saved state from the file.
     logging.info("Testing behavior with --use-cache on subsequent runs:")
-    result = run_and_check_output(
+    if result := run_and_check_output(
         [
             "pyre",
             "--typeshed",
@@ -110,8 +108,7 @@ def run_test_cache_first_and_second_runs(
         ],
         expected,
         "result.cache2",
-    )
-    if result:
+    ):
         logging.info("Run produced expected results\n")
     else:
         sys.exit(1)
@@ -131,7 +128,7 @@ def run_test_invalid_cache_file(
         pass
     (cache_path / "sharedmem").touch()
 
-    result = run_and_check_output(
+    if result := run_and_check_output(
         [
             "pyre",
             "--typeshed",
@@ -142,9 +139,7 @@ def run_test_invalid_cache_file(
         ],
         expected,
         "result.cache3",
-    )
-
-    if result:
+    ):
         logging.info("Run produced expected results\n")
     else:
         sys.exit(1)
@@ -185,8 +180,6 @@ def run_test_changed_pysa_file(
         logging.warning(
             f"Could not clean up {test_model_path.absolute()} after test run."
         )
-        pass
-
     if result:
         logging.info("Run produced expected results\n")
     else:
@@ -237,8 +230,6 @@ def run_test_changed_taint_config_file(
         logging.warning(
             f"Could not clean up {test_taint_config.absolute()} after test run."
         )
-        pass
-
     if result:
         logging.info("Run produced expected results\n")
     else:
@@ -259,8 +250,6 @@ def run_test_changed_models(
         test_model_path.unlink()
     except FileNotFoundError:
         logging.warning(f"Could not remove up {test_model_path.absolute()}.")
-        pass
-
     # Expected should have an additional issue from removing the sanitizer
     new_issue = {
         "code": 5001,
@@ -334,8 +323,6 @@ def run_test_changed_source_files(
         logging.warning(
             f"Could not clean up {new_file_path.absolute()} after test run."
         )
-        pass
-
     if result:
         logging.info("Run produced expected results\n")
     else:

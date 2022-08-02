@@ -32,8 +32,7 @@ def potential_rce_2(payload: int) -> None:
 @app.route("/pt/<string:payload>")
 def definite_pt(payload: str) -> str:
     f = open(payload, "r")
-    text = f.read()
-    return text
+    return f.read()
 
 
 @app.route("/xss/<string:payload>")

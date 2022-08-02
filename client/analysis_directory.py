@@ -82,17 +82,12 @@ def _resolve_filter_paths(
     original_directory: str,
 ) -> Set[str]:
     filter_paths = set()
-    if source_directories or targets:
-        if source_directories:
-            filter_paths.update(source_directories)
-        if targets:
-            filter_paths.update(
-                [buck.presumed_target_root(target) for target in targets]
-            )
-    else:
-        local_configuration_root = configuration.local_root
-        if local_configuration_root:
-            filter_paths = {local_configuration_root}
+    if source_directories:
+        filter_paths.update(source_directories)
+    if targets:
+        filter_paths.update(
+            [buck.presumed_target_root(target) for target in targets]
+        )
     return translate_paths(filter_paths, original_directory)
 
 
@@ -240,10 +235,8 @@ class SharedAnalysisDirectory(AnalysisDirectory):
     @functools.lru_cache(1)
     def get_command_line_root(self) -> str:
         path_to_root = self._local_configuration_root or "shared_analysis_directory"
-        suffix = "_{}".format(str(os.getpid())) if self._isolate else ""
-        return os.path.join(
-            self.get_scratch_directory(), "{}{}".format(path_to_root, suffix)
-        )
+        suffix = f"_{str(os.getpid())}" if self._isolate else ""
+        return os.path.join(self.get_scratch_directory(), f"{path_to_root}{suffix}")
 
     @functools.lru_cache(1)
     def get_root(self) -> str:
@@ -259,16 +252,15 @@ class SharedAnalysisDirectory(AnalysisDirectory):
                 translate_path(os.getcwd(), filter_root)
                 for filter_root in current_project_directories
             }
-        else:
-            buck_root = find_buck_root(self._project_root)
-            if buck_root is None:
-                raise EnvironmentException(
-                    "Cannot find buck root when constructing filter directories"
-                )
-            return {
-                translate_path(buck_root, filter_root)
-                for filter_root in current_project_directories
-            }
+        buck_root = find_buck_root(self._project_root)
+        if buck_root is None:
+            raise EnvironmentException(
+                "Cannot find buck root when constructing filter directories"
+            )
+        return {
+            translate_path(buck_root, filter_root)
+            for filter_root in current_project_directories
+        }
 
     def _log_build_event(
         self,
@@ -483,7 +475,7 @@ class SharedAnalysisDirectory(AnalysisDirectory):
         if (
             last_singly_deleted_path_and_link is not None
             and new_paths == [last_singly_deleted_path_and_link[0]]
-            and deleted_paths == []
+            and not deleted_paths
         ):
             return {
                 last_singly_deleted_path_and_link[0]: last_singly_deleted_path_and_link[
@@ -606,8 +598,7 @@ class SharedAnalysisDirectory(AnalysisDirectory):
         # mapping to get their old scratch path.
         deleted_scratch_paths = [self._symbolic_links[path] for path in deleted_paths]
         for path in deleted_paths:
-            link = self._symbolic_links.pop(path, None)
-            if link:
+            if link := self._symbolic_links.pop(path, None):
                 try:
                     _delete_symbolic_link(link)
                 except OSError:
@@ -845,10 +836,7 @@ def resolve_analysis_directory(
         )
 
     # Only read from the configuration if no explicit targets are passed in.
-    if not source_directories and not targets:
-        source_paths: List[SearchPathElement] = configuration.get_source_directories()
-        targets = list(configuration.targets or [])
-    else:
+    if source_directories or targets:
         source_paths: List[SearchPathElement] = [
             # TODO: support SubdirectorySearchPathElement here too?
             SimpleSearchPathElement(path)
@@ -867,6 +855,9 @@ def resolve_analysis_directory(
             command,
         )
 
+    else:
+        source_paths: List[SearchPathElement] = configuration.get_source_directories()
+        targets = list(configuration.targets or [])
     project_root = configuration.project_root
     local_configuration_root = configuration.local_root
     if local_configuration_root:
@@ -875,7 +866,7 @@ def resolve_analysis_directory(
         )
 
     if len(source_paths) == 1 and len(targets) == 0:
-        analysis_directory = AnalysisDirectory(
+        return AnalysisDirectory(
             source_paths.pop(),
             filter_paths=filter_paths,
             search_path=[
@@ -883,27 +874,25 @@ def resolve_analysis_directory(
                 for search_path in configuration.expand_and_get_existent_search_paths()
             ],
         )
-    else:
-        buck_builder, temporary_directories = _get_buck_builder(
-            configuration, relative_local_root, isolate
-        )
 
-        analysis_directory = SharedAnalysisDirectory(
-            source_directories=source_paths,
-            targets=targets,
-            buck_builder=buck_builder,
-            original_directory=original_directory,
-            project_root=project_root,
-            filter_paths=filter_paths,
-            local_configuration_root=local_configuration_root,
-            extensions=configuration.get_valid_extension_suffixes(),
-            search_path=[
-                search_path.path()
-                for search_path in configuration.expand_and_get_existent_search_paths()
-            ],
-            isolate=isolate,
-            configuration=configuration,
-            temporary_directories=temporary_directories,
-        )
+    buck_builder, temporary_directories = _get_buck_builder(
+        configuration, relative_local_root, isolate
+    )
 
-    return analysis_directory
+    return SharedAnalysisDirectory(
+        source_directories=source_paths,
+        targets=targets,
+        buck_builder=buck_builder,
+        original_directory=original_directory,
+        project_root=project_root,
+        filter_paths=filter_paths,
+        local_configuration_root=local_configuration_root,
+        extensions=configuration.get_valid_extension_suffixes(),
+        search_path=[
+            search_path.path()
+            for search_path in configuration.expand_and_get_existent_search_paths()
+        ],
+        isolate=isolate,
+        configuration=configuration,
+        temporary_directories=temporary_directories,
+    )

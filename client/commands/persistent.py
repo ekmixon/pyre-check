@@ -98,9 +98,8 @@ class Persistent(Command):
             standard_input = to_read[0]
             # Read content of the form Content-Length:n\r\n\r\n{jsonmessage}
             line = standard_input.readline()
-            match = re.match(r"Content-Length: (?P<bytes>[0-9]+)", line)
-            if match:
-                length = int(match.group("bytes"))
+            if match := re.match(r"Content-Length: (?P<bytes>[0-9]+)", line):
+                length = int(match["bytes"])
                 serialized_json = standard_input.read(length)
                 try:
                     parsed = json.loads(serialized_json)
@@ -113,7 +112,7 @@ class Persistent(Command):
         sys.stdout.write(cls._initialize_response(request_id))
         sys.stdout.flush()
         start_time = int(time.time())
-        while True:
-            if timeout is not None and timeout <= (int(time.time()) - start_time):
-                break
+        while not (
+            timeout is not None and timeout <= (int(time.time()) - start_time)
+        ):
             time.sleep(10)

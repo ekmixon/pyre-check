@@ -94,13 +94,15 @@ class SourceDatabaseBuckBuilder(BuckBuilder):
             )
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, SourceDatabaseBuckBuilder):
-            return False
         return (
-            self._buck_root == other._buck_root
-            and self._output_directory == other._output_directory
-            and self._buck_mode == other._buck_mode
-            and self._isolation_prefix == other._isolation_prefix
+            (
+                self._buck_root == other._buck_root
+                and self._output_directory == other._output_directory
+                and self._buck_mode == other._buck_mode
+                and self._isolation_prefix == other._isolation_prefix
+            )
+            if isinstance(other, SourceDatabaseBuckBuilder)
+            else False
         )
 
 
@@ -124,17 +126,19 @@ class FastBuckBuilder(BuckBuilder):
         self.unsupported_files: List[str] = []
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, FastBuckBuilder):
-            return False
         return (
-            self._buck_root == other._buck_root
-            and self._output_directory == other._output_directory
-            and self._buck_builder_binary == other._buck_builder_binary
-            and self._buck_mode == other._buck_mode
-            and self._project_name == other._project_name
-            and self.conflicting_files == other.conflicting_files
-            and self.unsupported_files == other.unsupported_files
-            and self._isolation_prefix == other._isolation_prefix
+            (
+                self._buck_root == other._buck_root
+                and self._output_directory == other._output_directory
+                and self._buck_builder_binary == other._buck_builder_binary
+                and self._buck_mode == other._buck_mode
+                and self._project_name == other._project_name
+                and self.conflicting_files == other.conflicting_files
+                and self.unsupported_files == other.unsupported_files
+                and self._isolation_prefix == other._isolation_prefix
+            )
+            if isinstance(other, FastBuckBuilder)
+            else False
         )
 
     def _get_builder_executable(self) -> str:
@@ -166,21 +170,19 @@ class FastBuckBuilder(BuckBuilder):
             + list(targets)
         )
         command.append("--debug")
-        buck_mode = self._buck_mode
-        if buck_mode:
+        if buck_mode := self._buck_mode:
             command.extend(["--mode", buck_mode])
-        project_name = self._project_name
-        if project_name:
+        if project_name := self._project_name:
             command.extend(["--project_name", project_name])
         LOG.info("Building buck targets...")
-        LOG.debug("Buck builder command: `{}`".format(" ".join(command)))
+        LOG.debug(f'Buck builder command: `{" ".join(command)}`')
         with subprocess.Popen(
-            command,
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True,
-        ) as buck_builder_process:
+                command,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+            ) as buck_builder_process:
             # Java's logging conflicts with Python's logging, we capture the
             # logs and re-log them with python's logger.
             log_processor = threading.Thread(
@@ -191,21 +193,20 @@ class FastBuckBuilder(BuckBuilder):
             return_code = buck_builder_process.wait()
             # Wait until all stderr have been printed.
             log_processor.join()
-            if return_code == 0:
-                LOG.info("Finished building targets.")
-                # pyre-fixme[6]: Expected `_Reader` for 1st param but got
-                #  `Optional[typing.IO[typing.Any]]`.
-                debug_output = json.load(buck_builder_process.stdout)
-                self.conflicting_files += debug_output["conflictingFiles"]
-                self.unsupported_files += debug_output["unsupportedFiles"]
-                return BuckBuildOutput(
-                    output_directories=[self._output_directory],
-                    unsupported_files=self.unsupported_files,
-                )
-            else:
+            if return_code != 0:
                 raise BuckException(
                     f"Failed to build targets with:\n`{' '.join(command)}`"
                 )
+            LOG.info("Finished building targets.")
+            # pyre-fixme[6]: Expected `_Reader` for 1st param but got
+            #  `Optional[typing.IO[typing.Any]]`.
+            debug_output = json.load(buck_builder_process.stdout)
+            self.conflicting_files += debug_output["conflictingFiles"]
+            self.unsupported_files += debug_output["unsupportedFiles"]
+            return BuckBuildOutput(
+                output_directories=[self._output_directory],
+                unsupported_files=self.unsupported_files,
+            )
 
     def _read_stderr(
         self, stream: Iterable[str], default_logging_section: int = logging.INFO
@@ -218,10 +219,7 @@ class FastBuckBuilder(BuckBuilder):
                 LOG.warning(line[9:])
             elif line.startswith("ERROR: "):
                 LOG.error(line[7:])
-            elif line.startswith("[WARNING:"):
-                # Filter away thrift warnings.
-                pass
-            else:
+            elif not line.startswith("[WARNING:"):
                 LOG.log(default_logging_section, line)
 
 
@@ -237,9 +235,7 @@ class SimpleBuckBuilder(BuckBuilder):
         )
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, SimpleBuckBuilder):
-            return True
-        return False
+        return isinstance(other, SimpleBuckBuilder)
 
 
 def presumed_target_root(target: str) -> str:
@@ -261,15 +257,17 @@ def _find_built_source_directories(
     if buck_root is None:
         raise Exception("No .buckconfig found in ancestors of the current directory.")
 
-    directories = set()
-    for target, destination in targets_to_destinations:
-        directories.add((target, os.path.dirname(destination)))
+    directories = {
+        (target, os.path.dirname(destination))
+        for target, destination in targets_to_destinations
+    }
 
     for target, directory in directories:
         target_name = target.split(":")[1]
         discovered_source_directories = glob.glob(
-            os.path.join(buck_root, directory, "{}#*link-tree".format(target_name))
+            os.path.join(buck_root, directory, f"{target_name}#*link-tree")
         )
+
         if len(discovered_source_directories) == 0:
             targets_not_found.append(target)
         source_directories.extend(
@@ -311,9 +309,7 @@ def _normalize(targets: List[str]) -> List[Tuple[str, str]]:
         result = []
         for target in targets_to_destinations:
             pair = target.split(" ")
-            if len(pair) != 2:
-                pass
-            else:
+            if len(pair) == 2:
                 result.append((pair[0], pair[1]))
         if not result:
             LOG.warning(
@@ -328,13 +324,11 @@ def _normalize(targets: List[str]) -> List[Tuple[str, str]]:
     except subprocess.TimeoutExpired as error:
         LOG.error("Buck output so far: %s", error.stderr.decode().strip())
         raise BuckException(
-            "Seems like `{}` is hanging.\n   "
-            "Try running `buck clean` before trying again.".format(
-                " ".join(command[:-1])
-            )
+            f'Seems like `{" ".join(command[:-1])}` is hanging.\n   Try running `buck clean` before trying again.'
         )
+
     except subprocess.CalledProcessError as error:
-        LOG.error("Buck returned error: %s" % error.stderr.decode().strip())
+        LOG.error(f"Buck returned error: {error.stderr.decode().strip()}")
         raise BuckException(
             "Could not normalize targets. Check the paths or run `buck clean`."
         )
@@ -372,9 +366,8 @@ def _map_normalized_targets_to_original(
             if original.endswith("/..."):
                 if target.startswith(original[:-4]):
                     name = original
-            else:
-                if target == original:
-                    name = original
+            elif target == original:
+                name = original
         # No original target matched, fallback to normalized.
         if name is None:
             name = target
@@ -405,16 +398,15 @@ def _buck_query(
         ),
         "query",
         "--json",
-        *(["@mode/" + buck_mode] if buck_mode is not None else []),
+        *([f"@mode/{buck_mode}"] if buck_mode is not None else []),
         "--config",
         "client.id=pyre",
         "--output-attribute",
         ".*",
-        # This will get only those owner targets that are beneath our targets or
-        # the dependencies of our targets.
         f"owner(%s) ^ deps(set({target_string}))",
         *project_paths,
     ]
+
     LOG.info(f"Running command: {command}")
     return (
         subprocess.check_output(command, timeout=30, stderr=subprocess.DEVNULL)
@@ -449,12 +441,8 @@ def query_buck_relative_paths(
         owner_output = json.loads(
             _buck_query(project_paths, targets, buck_mode, isolation_prefix)
         )
-    except (
-        subprocess.TimeoutExpired,
-        subprocess.CalledProcessError,
-        JSONDecodeError,
-    ) as error:
-        raise BuckException("Querying buck for relative paths failed: {}".format(error))
+    except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as error:
+        raise BuckException(f"Querying buck for relative paths failed: {error}")
 
     results = {}
     for project_path in project_paths:

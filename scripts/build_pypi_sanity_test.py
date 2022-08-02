@@ -37,18 +37,14 @@ def validate_configuration(temporary_project_path: Path) -> None:
     taint_path = Path(configuration["taint_models_path"])
     production_assert(taint_path.is_dir(), "Taint path is not a directory.")
 
-    # Confirm configuration explicit typeshed and binary are valid. Missing fields are
-    # expected if typeshed and binary can be found in a standard location.
-    typeshed_path = configuration.get("typeshed")
-    if typeshed_path:
+    if typeshed_path := configuration.get("typeshed"):
         typeshed_path = Path(typeshed_path)
         production_assert(typeshed_path.is_dir(), "Explicit typeshed path is invalid.")
         production_assert(
             (typeshed_path / "stdlib").is_dir(),
             "`stdlib` was not included in typeshed.",
         )
-    binary_path = configuration.get("binary")
-    if binary_path:
+    if binary_path := configuration.get("binary"):
         binary_path = Path(binary_path)
         production_assert(binary_path.is_file(), "Explicit binary path is invalid.")
 

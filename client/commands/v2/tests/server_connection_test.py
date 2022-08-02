@@ -37,8 +37,9 @@ class SocketTest(testslide.TestCase):
             project_root = Path("project_root")
             relative_local_root = Path("my/project")
             md5_hash = hashlib.md5(
-                (str(project_root) + "//" + str(relative_local_root)).encode("utf-8")
+                f"{str(project_root)}//{str(relative_local_root)}".encode("utf-8")
             ).hexdigest()
+
             self.assertEqual(
                 get_user_independent_socket_path(
                     root_path, project_root, relative_local_root
@@ -65,14 +66,23 @@ class SocketTest(testslide.TestCase):
             relative_local_root_a = Path("my/project")
             relative_local_root_b = Path("my/otherproject")
             md5_hash_a = hashlib.md5(
-                (str(project_root) + "//" + str(relative_local_root_a)).encode("utf-8")
+                f"{str(project_root)}//{str(relative_local_root_a)}".encode(
+                    "utf-8"
+                )
             ).hexdigest()
+
             md5_hash_a_recomputed = hashlib.md5(
-                (str(project_root) + "//" + str(relative_local_root_a)).encode("utf-8")
+                f"{str(project_root)}//{str(relative_local_root_a)}".encode(
+                    "utf-8"
+                )
             ).hexdigest()
+
             md5_hash_b = hashlib.md5(
-                (str(project_root) + "//" + str(relative_local_root_b)).encode("utf-8")
+                f"{str(project_root)}//{str(relative_local_root_b)}".encode(
+                    "utf-8"
+                )
             ).hexdigest()
+
             self.assertTrue(md5_hash_a == md5_hash_a_recomputed)
             self.assertFalse(md5_hash_a == md5_hash_b)
 
@@ -80,8 +90,9 @@ class SocketTest(testslide.TestCase):
             project_root = Path("project_root" * 100)
             relative_local_root = Path("my/project")
             md5_hash = hashlib.md5(
-                (str(project_root) + "//" + str(relative_local_root)).encode("utf-8")
+                f"{str(project_root)}//{str(relative_local_root)}".encode("utf-8")
             ).hexdigest()
+
             self.assertTrue(len(md5_hash) < 100)
 
 

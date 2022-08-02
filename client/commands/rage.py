@@ -41,8 +41,7 @@ class Rage(Command):
         return ["-log-directory", self._log_directory_for_binary]
 
     def _run(self) -> None:
-        output_path = self._output_path
-        if output_path:
+        if output_path := self._output_path:
             with open(output_path, "w") as output_file:
                 self._rage(output_file)
         else:

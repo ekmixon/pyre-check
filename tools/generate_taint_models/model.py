@@ -55,22 +55,16 @@ class RawCallableModel(Model):
         annotations: Optional[AnnotationSpecification] = None,
         whitelist: Optional[WhitelistSpecification] = None,
     ) -> None:
-        if annotations:
-            self.annotations = annotations
-        else:
-            self.annotations = AnnotationSpecification(
-                parameter_annotation=parameter_annotation, returns=returns
-            )
+        self.annotations = annotations or AnnotationSpecification(
+            parameter_annotation=parameter_annotation, returns=returns
+        )
 
-        if whitelist:
-            self.whitelist = whitelist
-        else:
-            self.whitelist = WhitelistSpecification(
-                parameter_type=set(parameter_type_whitelist)
-                if parameter_type_whitelist
-                else None,
-                parameter_name=parameter_name_whitelist,
-            )
+        self.whitelist = whitelist or WhitelistSpecification(
+            parameter_type=set(parameter_type_whitelist)
+            if parameter_type_whitelist
+            else None,
+            parameter_name=parameter_name_whitelist,
+        )
 
         callable_name = self._get_fully_qualified_callable_name()
         # Object construction should fail if any child class passes in a None.
@@ -117,8 +111,7 @@ class RawCallableModel(Model):
             else:
                 serialized_parameters.append(parameter.name)
 
-        returns = self.annotations.returns
-        if returns:
+        if returns := self.annotations.returns:
             return_annotation = f" -> {returns}"
         else:
             return_annotation = ""
@@ -129,11 +122,13 @@ class RawCallableModel(Model):
         )
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, RawCallableModel):
-            return False
         return (
-            self.callable_name == other.callable_name
-            and self.parameters == other.parameters
+            (
+                self.callable_name == other.callable_name
+                and self.parameters == other.parameters
+            )
+            if isinstance(other, RawCallableModel)
+            else False
         )
 
     # Need to explicitly define this(despite baseclass) as we are overriding eq
@@ -214,31 +209,30 @@ class FunctionDefinitionModel(RawCallableModel):
             return None
 
     def _generate_parameters(self) -> List[Parameter]:
-        parameters: List[Parameter] = []
         function_arguments = self.definition.args
 
-        for ast_arg in function_arguments.args:
-            parameters.append(
-                Parameter(
-                    ast_arg.arg,
-                    FunctionDefinitionModel._get_annotation(ast_arg),
-                    Parameter.Kind.ARG,
-                )
+        parameters: List[Parameter] = [
+            Parameter(
+                ast_arg.arg,
+                FunctionDefinitionModel._get_annotation(ast_arg),
+                Parameter.Kind.ARG,
             )
+            for ast_arg in function_arguments.args
+        ]
 
         keyword_only_parameters = function_arguments.kwonlyargs
         if len(keyword_only_parameters) > 0:
             parameters.append(
                 Parameter(name="*", annotation=None, kind=Parameter.Kind.ARG)
             )
-            for parameter in keyword_only_parameters:
-                parameters.append(
-                    Parameter(
-                        parameter.arg,
-                        FunctionDefinitionModel._get_annotation(parameter),
-                        Parameter.Kind.ARG,
-                    )
+            parameters.extend(
+                Parameter(
+                    parameter.arg,
+                    FunctionDefinitionModel._get_annotation(parameter),
+                    Parameter.Kind.ARG,
                 )
+                for parameter in keyword_only_parameters
+            )
 
         vararg_parameters = function_arguments.vararg
         if isinstance(vararg_parameters, ast.arg):
@@ -327,9 +321,11 @@ class AssignmentModel(Model):
         return f"{self.target}: {self.annotation} = ..."
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, AssignmentModel):
-            return False
-        return self.target == other.target
+        return (
+            self.target == other.target
+            if isinstance(other, AssignmentModel)
+            else False
+        )
 
     def __hash__(self) -> int:
         return hash(self.target)
@@ -347,9 +343,11 @@ class ClassModel(Model):
         return f"class {self.class_name}({self.annotation}): ..."
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, ClassModel):
-            return False
-        return self.class_name == other.class_name
+        return (
+            self.class_name == other.class_name
+            if isinstance(other, ClassModel)
+            else False
+        )
 
     def __hash__(self) -> int:
         return hash(self.class_name)
@@ -365,11 +363,13 @@ class PropertyModel(Model):
         return f"@property\ndef {self.class_name}.{self.attribute_name}(self) -> {self.annotation}: ..."  # noqa B950
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, PropertyModel):
-            return False
         return (
-            self.class_name == other.class_name
-            and self.attribute_name == other.attribute_name
+            (
+                self.class_name == other.class_name
+                and self.attribute_name == other.attribute_name
+            )
+            if isinstance(other, PropertyModel)
+            else False
         )
 
     def __hash__(self) -> int:

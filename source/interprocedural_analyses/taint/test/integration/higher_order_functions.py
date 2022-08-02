@@ -62,8 +62,7 @@ def apply(f, x):
 
 def source_through_tito():
     x = _test_source()
-    y = apply(has_tito, x)
-    return y
+    return apply(has_tito, x)
 
 
 class Callable:

@@ -32,11 +32,7 @@ def get_data(x):
 def product_data(x):
     data = get_data(x)
 
-    if x:
-        parent = product_data(x.parent)
-    else:
-        parent = None
-
+    parent = product_data(x.parent) if x else None
     is_blocked = some_service(data.id)
     report_tuple = DataRecord(id=data.id, username=data.name, isBlocked=is_blocked)
     return {
@@ -168,10 +164,7 @@ def add_feature(arg):
 
 
 def tito_with_feature(arg):
-    if arg:
-        return arg
-    else:
-        return add_feature(arg)
+    return arg or add_feature(arg)
 
 
 def test_always_via_feature():
@@ -197,7 +190,7 @@ def test_explicit_call_to_superclass():
 
 
 def evaluate_lazy(payload: Dict[str, str]):
-    return {key: value for key, value in payload.items()}
+    return dict(payload)
 
 
 def test_simplified_evaluator():
@@ -206,10 +199,7 @@ def test_simplified_evaluator():
 
 class ComplexEvaluator:
     def evaluate_lazy_field(self, field):
-        if callable(field):
-            return field()
-        else:
-            return field
+        return field() if callable(field) else field
 
     def evaluate_lazy_payload(self, payload):
         def _evaluate(field):

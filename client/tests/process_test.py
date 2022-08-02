@@ -111,9 +111,7 @@ class ProcessTest(unittest.TestCase):
         self, get_process: MagicMock, glob: MagicMock, process_class: MagicMock
     ) -> None:
         def _get_process(path: str) -> Optional[psutil.Process]:
-            if path.endswith("3.pid"):
-                return None
-            return psutil.Process(123)
+            return None if path.endswith("3.pid") else psutil.Process(123)
 
         get_process.side_effect = _get_process
         processes = Process.get_processes(name="foo", log_directory="/root/")

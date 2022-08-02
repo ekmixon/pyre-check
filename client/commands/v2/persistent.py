@@ -700,8 +700,7 @@ class PyreServerHandler(connection.BackgroundTask):
         self, server_input_channel: connection.TextReader
     ) -> AsyncIterator[str]:
         try:
-            raw_response = await server_input_channel.read_until(separator="\n")
-            yield raw_response
+            yield await server_input_channel.read_until(separator="\n")
         except incremental.InvalidServerResponse as error:
             LOG.error(f"Pyre server returns invalid response: {error}")
 

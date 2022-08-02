@@ -219,8 +219,7 @@ class Kill(Command):
             ).run()
 
     def _run(self) -> None:
-        explicit_local = self._configuration.local_root
-        if explicit_local:
+        if explicit_local := self._configuration.local_root:
             LOG.warning(
                 "Pyre kill will terminate all running servers. "
                 + f"Specifying local path `{explicit_local}` is unnecessary."
@@ -240,7 +239,4 @@ class Kill(Command):
 
 def _get_process_name(environment_variable_name: str, default: str) -> str:
     overridden = os.getenv(environment_variable_name)
-    if overridden is not None:
-        return os.path.basename(overridden)
-    else:
-        return default
+    return os.path.basename(overridden) if overridden is not None else default

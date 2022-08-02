@@ -42,20 +42,20 @@ class RunningServerStatus:
 
     @staticmethod
     def from_json(input_json: Dict[str, object]) -> "RunningServerStatus":
-        pid = input_json.get("pid", None)
+        pid = input_json.get("pid")
         if not isinstance(pid, int):
             raise InvalidServerResponse(f"Expect `pid` to be an int but got {pid}")
-        version = input_json.get("version", None)
+        version = input_json.get("version")
         if not isinstance(version, str):
             raise InvalidServerResponse(
                 f"Expect `version` to be a string but got {version}"
             )
-        global_root = input_json.get("global_root", None)
+        global_root = input_json.get("global_root")
         if not isinstance(global_root, str):
             raise InvalidServerResponse(
                 f"Expect `global_root` to be a string but got {global_root}"
             )
-        relative_local_root = input_json.get("relative_local_root", None)
+        relative_local_root = input_json.get("relative_local_root")
         if relative_local_root is not None and not isinstance(relative_local_root, str):
             raise InvalidServerResponse(
                 "Expected `relative_local_root` to be a string but got "

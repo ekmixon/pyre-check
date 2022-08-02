@@ -27,7 +27,7 @@ class LocalMode(Enum):
         return "^[ \t]*# *" + self.value + " *$"
 
     def get_comment(self) -> str:
-        return "# " + self.value
+        return f"# {self.value}"
 
 
 class Target(NamedTuple):
@@ -67,16 +67,16 @@ class TargetCollector(builtin_ast.NodeVisitor):
         self, field: builtin_ast.keyword, name: Optional[str]
     ) -> Optional[str]:
         value = field.value
-        if field.arg == "name":
-            if isinstance(value, builtin_ast.Str):
-                return value.s
+        if field.arg == "name" and isinstance(value, builtin_ast.Str):
+            return value.s
         return name
 
     def _get_check_types(self, field: builtin_ast.keyword, check_types: bool) -> bool:
         value = field.value
-        if field.arg == "check_types":
-            if isinstance(value, builtin_ast.NameConstant):
-                return check_types or value.value
+        if field.arg == "check_types" and isinstance(
+            value, builtin_ast.NameConstant
+        ):
+            return check_types or value.value
         return check_types
 
     def _get_strict(
@@ -93,9 +93,10 @@ class TargetCollector(builtin_ast.NodeVisitor):
 
     def _get_uses_pyre(self, field: builtin_ast.keyword, uses_pyre: bool) -> bool:
         value = field.value
-        if field.arg == "check_types_options":
-            if isinstance(value, builtin_ast.Str):
-                return uses_pyre and "mypy" not in value.s.lower()
+        if field.arg == "check_types_options" and isinstance(
+            value, builtin_ast.Str
+        ):
+            return uses_pyre and "mypy" not in value.s.lower()
         return uses_pyre
 
     def _get_has_typing_settings(
@@ -177,7 +178,7 @@ def add_local_mode(filename: str, mode: LocalMode) -> None:
     for line in lines:
         if not past_header and not is_header(line):
             past_header = True
-            if len(new_lines) != 0:
+            if new_lines:
                 new_lines.append("")
             new_lines.append(mode.get_comment())
         new_lines.append(line)
@@ -248,11 +249,12 @@ def get_filesystem() -> Filesystem:
 
 
 def remove_non_pyre_ignores(subdirectory: Path) -> None:
-    python_files = [
+    if python_files := [
         subdirectory / path
-        for path in get_filesystem().list(str(subdirectory), patterns=[r"**/*.py"])
-    ]
-    if python_files:
+        for path in get_filesystem().list(
+            str(subdirectory), patterns=[r"**/*.py"]
+        )
+    ]:
         LOG.info("...cleaning %s python files", len(python_files))
         remove_type_ignore_command = [
             "sed",

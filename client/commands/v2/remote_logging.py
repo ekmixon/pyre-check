@@ -71,18 +71,18 @@ def log_usage_with_additional_info(command_name: str) -> _DecoratorWithDynamicLo
     }
 
     def decorator(
-        __command: "Callable[Concatenate[configuration_module.Configuration, TParams], ExitCodeWithAdditionalLogging]",  # noqa: B950
-    ) -> "Callable[Concatenate[configuration_module.Configuration, TParams], commands.ExitCode]":  # noqa: B950
+            __command: "Callable[Concatenate[configuration_module.Configuration, TParams], ExitCodeWithAdditionalLogging]",  # noqa: B950
+        ) -> "Callable[Concatenate[configuration_module.Configuration, TParams], commands.ExitCode]":  # noqa: B950
         def decorated(
-            configuration: configuration_module.Configuration,
-            *args: TParams.args,
-            **kwargs: TParams.kwargs
-        ) -> commands.ExitCode:
+                    configuration: configuration_module.Configuration,
+                    *args: TParams.args,
+                    **kwargs: TParams.kwargs
+                ) -> commands.ExitCode:
             start_time: float = time.time()
 
             def log_success(
-                exit_code: int, additional_logging: Dict[str, Optional[str]]
-            ) -> None:
+                            exit_code: int, additional_logging: Dict[str, Optional[str]]
+                        ) -> None:
                 statistics_logger.log_with_configuration(
                     category=statistics_logger.LoggerCategory.USAGE,
                     configuration=configuration,
@@ -90,8 +90,9 @@ def log_usage_with_additional_info(command_name: str) -> _DecoratorWithDynamicLo
                         "exit_code": exit_code,
                         "runtime": int((time.time() - start_time) * 1000),
                     },
-                    normals={**auxiliary_info, **additional_logging},
+                    normals=auxiliary_info | additional_logging,
                 )
+
 
             def log_failure(
                 error: Exception, exit_code: int = commands.ExitCode.FAILURE

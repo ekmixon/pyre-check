@@ -44,8 +44,9 @@ class MonitorTest(unittest.TestCase):
         self.assertEqual(subscription.name, "pyre_file_change_subscription")
         self.assertEqual(subscription.subscription["fields"], ["name"])
         self.assertEqual(
-            subscription.subscription["expression"][0:2], ["allof", ["type", "f"]]
+            subscription.subscription["expression"][:2], ["allof", ["type", "f"]]
         )
+
         self.assertCountEqual(
             subscription.subscription["expression"][2],
             [
@@ -66,8 +67,9 @@ class MonitorTest(unittest.TestCase):
         self.assertEqual(subscription.name, "pyre_file_change_subscription")
         self.assertEqual(subscription.subscription["fields"], ["name"])
         self.assertEqual(
-            subscription.subscription["expression"][0:2], ["allof", ["type", "f"]]
+            subscription.subscription["expression"][:2], ["allof", ["type", "f"]]
         )
+
         self.assertCountEqual(
             subscription.subscription["expression"][2],
             [
@@ -144,7 +146,7 @@ class MonitorTest(unittest.TestCase):
             server_thread.start()
 
             configuration = mock_configuration(version_hash="123")
-            configuration.log_directory = root + "/.pyre"
+            configuration.log_directory = f"{root}/.pyre"
             configuration.extensions = []
             analysis_directory = MagicMock()
             analysis_directory.process_updated_files.side_effect = (

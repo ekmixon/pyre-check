@@ -58,9 +58,11 @@ def _expand_global_root(path: str, global_root: str) -> str:
 
 
 def _expand_relative_root(path: str, relative_root: str) -> str:
-    if not path.startswith("//"):
-        return expand_relative_path(relative_root, path)
-    return path
+    return (
+        path
+        if path.startswith("//")
+        else expand_relative_path(relative_root, path)
+    )
 
 
 def _get_optional_value(source: Optional[T], default: T) -> T:
@@ -72,12 +74,13 @@ def _expand_and_get_existent_ignore_all_errors_path(
 ) -> List[str]:
     expanded_ignore_paths = []
     for path in ignore_all_errors:
-        expanded = glob.glob(_expand_global_root(path, global_root=project_root))
-        if not expanded:
-            expanded_ignore_paths.append(path)
-        else:
+        if expanded := glob.glob(
+            _expand_global_root(path, global_root=project_root)
+        ):
             expanded_ignore_paths.extend(expanded)
 
+        else:
+            expanded_ignore_paths.append(path)
     paths = []
     for path in expanded_ignore_paths:
         if os.path.exists(path):
@@ -148,12 +151,10 @@ class SimpleSearchPathElement(SearchPathElement):
         )
 
     def expand_glob(self) -> List[SearchPathElement]:
-        expanded = sorted(glob.glob(self.get_root()))
-        if expanded:
+        if expanded := sorted(glob.glob(self.get_root())):
             return [SimpleSearchPathElement(path) for path in expanded]
-        else:
-            LOG.warning(f"'{self.path()}' does not match any paths.")
-            return []
+        LOG.warning(f"'{self.path()}' does not match any paths.")
+        return []
 
 
 @dataclasses.dataclass(frozen=True)
@@ -168,7 +169,7 @@ class SubdirectorySearchPathElement(SearchPathElement):
         return self.root
 
     def command_line_argument(self) -> str:
-        return self.root + "$" + self.subdirectory
+        return f"{self.root}${self.subdirectory}"
 
     def expand_global_root(self, global_root: str) -> SearchPathElement:
         return SubdirectorySearchPathElement(
@@ -198,7 +199,7 @@ class SitePackageSearchPathElement(SearchPathElement):
         return self.site_root
 
     def command_line_argument(self) -> str:
-        return self.site_root + "$" + self.package_name
+        return f"{self.site_root}${self.package_name}"
 
     def expand_global_root(self, global_root: str) -> SearchPathElement:
         # Site package does not participate in root expansion.
@@ -300,10 +301,7 @@ def assert_readable_directory_in_configuration(
 
 
 def _in_virtual_environment(override: Optional[bool] = None) -> bool:
-    if override is not None:
-        return override
-
-    return sys.prefix != sys.base_prefix
+    return override if override is not None else sys.prefix != sys.base_prefix
 
 
 def _expand_and_get_existent_paths(
@@ -363,19 +361,19 @@ class SharedMemory:
         heap_size = self.heap_size
         dependency_table_power = self.dependency_table_power
         hash_table_power = self.hash_table_power
-        return {
-            **({"heap_size": heap_size} if heap_size is not None else {}),
-            **(
+        return (
+            ({"heap_size": heap_size} if heap_size is not None else {})
+            | (
                 {"dependency_table_power": dependency_table_power}
                 if dependency_table_power is not None
                 else {}
-            ),
-            **(
+            )
+            | (
                 {"hash_table_power": hash_table_power}
                 if hash_table_power is not None
                 else {}
-            ),
-        }
+            )
+        )
 
 
 @dataclass(frozen=True)
@@ -1138,9 +1136,7 @@ class Configuration:
                 os.path.dirname(sys.argv[0]), BINARY_NAME
             )
             binary_candidate = shutil.which(binary_candidate_name)
-        if binary_candidate is not None:
-            return binary_candidate
-        return None
+        return binary_candidate if binary_candidate is not None else None
 
     def get_typeshed_respecting_override(self) -> Optional[str]:
         typeshed = self.typeshed
@@ -1160,8 +1156,7 @@ class Configuration:
             return str(auto_determined_typeshed)
 
     def get_version_hash_respecting_override(self) -> Optional[str]:
-        overriding_version_hash = os.getenv("PYRE_VERSION_HASH")
-        if overriding_version_hash:
+        if overriding_version_hash := os.getenv("PYRE_VERSION_HASH"):
             LOG.warning(f"Version hash overridden with `{overriding_version_hash}`")
             return overriding_version_hash
         return self.version_hash
@@ -1216,13 +1211,12 @@ class Configuration:
         python_version = self.python_version
         if python_version is not None:
             return python_version
-        else:
-            version_info = sys.version_info
-            return PythonVersion(
-                major=version_info.major,
-                minor=version_info.minor,
-                micro=version_info.micro,
-            )
+        version_info = sys.version_info
+        return PythonVersion(
+            major=version_info.major,
+            minor=version_info.minor,
+            micro=version_info.micro,
+        )
 
 
 def create_configuration(
@@ -1255,13 +1249,12 @@ def create_configuration(
     command_argument_configuration = PartialConfiguration.from_command_arguments(
         arguments
     ).expand_relative_paths(str(Path.cwd()))
+    relative_local_root = None
     if found_root is None:
         project_root = Path.cwd()
-        relative_local_root = None
         partial_configuration = command_argument_configuration
     else:
         project_root = found_root.global_root
-        relative_local_root = None
         partial_configuration = PartialConfiguration.from_file(
             project_root / CONFIGURATION_FILE
         ).expand_relative_paths(str(project_root))

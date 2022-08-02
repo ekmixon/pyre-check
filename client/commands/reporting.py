@@ -63,8 +63,10 @@ class Reporting(Command):
         result.check()
         errors: List[LegacyError] = []
         results: List[Dict[str, Any]] = self._load_errors_from_json(result.output)
-        for error in results:
-            errors.append(LegacyError.create(error, ignore_error=False))
+        errors.extend(
+            LegacyError.create(error, ignore_error=False) for error in results
+        )
+
         return errors
 
     def _relativize_errors(
@@ -87,11 +89,14 @@ class Reporting(Command):
 
     def _filter_errors(self, errors: Sequence[LegacyError]) -> Sequence[LegacyError]:
         filtered_errors = [error for error in errors if not error.is_ignored()]
-        sorted_errors = sorted(
+        return sorted(
             filtered_errors,
-            key=lambda error: (error.error.path, error.error.line, error.error.column),
+            key=lambda error: (
+                error.error.path,
+                error.error.line,
+                error.error.column,
+            ),
         )
-        return sorted_errors
 
     def _get_errors(self, result: Result) -> Sequence[LegacyError]:
         analysis_root = os.path.realpath(

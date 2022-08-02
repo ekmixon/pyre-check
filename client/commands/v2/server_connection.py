@@ -42,7 +42,7 @@ def get_user_independent_socket_path(
     """
     project_identifier = str(global_root)
     if relative_local_root is not None:
-        project_identifier = project_identifier + "//" + str(relative_local_root)
+        project_identifier = f"{project_identifier}//{str(relative_local_root)}"
     project_identifier = project_identifier.encode("utf-8")
 
     project_hash = hashlib.md5(project_identifier).hexdigest()

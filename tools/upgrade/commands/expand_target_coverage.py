@@ -69,7 +69,7 @@ class ExpandTargetCoverage(ErrorSuppressingCommand):
 
         # Do not change if configurations exist below given root
         existing_configurations = find_files(local_root, ".pyre_configuration.local")
-        if existing_configurations and not existing_configurations == [
+        if existing_configurations and existing_configurations != [
             str(local_root / ".pyre_configuration.local")
         ]:
             LOG.warning(
@@ -86,7 +86,7 @@ class ExpandTargetCoverage(ErrorSuppressingCommand):
         LOG.info("Expanding typecheck targets in `%s`", local_configuration)
         configuration = Configuration(local_configuration)
         existing_targets = configuration.targets
-        glob_target = "//{}/...".format(str(local_root))
+        glob_target = f"//{str(local_root)}/..."
         if existing_targets == [glob_target]:
             LOG.info("Configuration is already fully expanded.")
             return
@@ -112,10 +112,9 @@ class ExpandTargetCoverage(ErrorSuppressingCommand):
                 self._apply_suppressions(Errors(errors))
 
         # Lint and re-run pyre once to resolve most formatting issues
-        if self._lint:
-            if self._repository.format():
-                errors = configuration.get_errors(should_clean=False)
-                self._apply_suppressions(errors)
+        if self._lint and self._repository.format():
+            errors = configuration.get_errors(should_clean=False)
+            self._apply_suppressions(errors)
 
         self._repository.commit_changes(
             commit=(not self._no_commit),

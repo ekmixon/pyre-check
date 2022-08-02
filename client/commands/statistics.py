@@ -58,8 +58,7 @@ def _parse_paths(paths: List[Path]) -> List[Path]:
     for path in paths:
         if path.is_dir():
             parsed_directory_paths = _get_paths(path)
-            for path in parsed_directory_paths:
-                parsed_paths.append(path)
+            parsed_paths.extend(iter(parsed_directory_paths))
         else:
             parsed_paths.append(path)
     return parsed_paths
@@ -207,7 +206,7 @@ class Statistics(Command):
         return list(
             filter(
                 lambda path: not any(
-                    [re.match(exclude_pattern, path) for exclude_pattern in excludes]
+                    re.match(exclude_pattern, path) for exclude_pattern in excludes
                 ),
                 paths,
             )
@@ -228,7 +227,7 @@ class Statistics(Command):
             "line_count": 0,
         }
         for annotation_data in data["annotations"].values():
-            for key in aggregate_annotations.keys():
+            for key in aggregate_annotations:
                 aggregate_annotations[key] += annotation_data[key]
 
         return {

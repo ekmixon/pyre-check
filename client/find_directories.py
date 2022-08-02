@@ -61,12 +61,11 @@ def get_relative_local_root(
 ) -> Optional[str]:
     if local_root is None:
         return None
-    else:
-        try:
-            return str(local_root.relative_to(global_root))
-        except ValueError:
-            # This happens when `local_root` is not prefixed by `global_root`
-            return None
+    try:
+        return str(local_root.relative_to(global_root))
+    except ValueError:
+        # This happens when `local_root` is not prefixed by `global_root`
+        return None
 
 
 class FoundRoot(NamedTuple):
@@ -121,10 +120,9 @@ def find_typeshed() -> Optional[Path]:
     # Prefer the typeshed we bundled ourselves (if any) to the one
     # from the environment.
     bundled_typeshed_relative_path = "pyre_check/typeshed/"
-    bundled_typeshed = find_parent_directory_containing_directory(
+    if bundled_typeshed := find_parent_directory_containing_directory(
         current_directory, bundled_typeshed_relative_path
-    )
-    if bundled_typeshed:
+    ):
         return bundled_typeshed / bundled_typeshed_relative_path
 
     try:
@@ -143,17 +141,17 @@ def find_typeshed_search_paths(typeshed_root: Path) -> List[Path]:
     Given the root of typeshed, find all subdirectories in it that can be used
     as search paths for Pyre.
     """
-    search_path = []
     third_party_root = typeshed_root / "stubs"
     third_party_subdirectories = (
         sorted(third_party_root.iterdir()) if third_party_root.is_dir() else []
     )
-    for typeshed_subdirectory in itertools.chain(
-        [typeshed_root / "stdlib"], third_party_subdirectories
-    ):
-        if typeshed_subdirectory.is_dir():
-            search_path.append(typeshed_subdirectory)
-    return search_path
+    return [
+        typeshed_subdirectory
+        for typeshed_subdirectory in itertools.chain(
+            [typeshed_root / "stdlib"], third_party_subdirectories
+        )
+        if typeshed_subdirectory.is_dir()
+    ]
 
 
 def find_taint_models_directory() -> Optional[Path]:

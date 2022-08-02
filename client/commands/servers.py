@@ -42,10 +42,7 @@ class ServerDetails(NamedTuple):
 
     @property
     def name(self) -> str:
-        if self.is_root():
-            return ROOT_PLACEHOLDER_NAME
-        else:
-            return self.local_root
+        return ROOT_PLACEHOLDER_NAME if self.is_root() else self.local_root
 
 
 class Servers(Command):
@@ -83,13 +80,12 @@ class Servers(Command):
                 for details in all_server_details
             ]
             log.stdout.write(json.dumps(server_details))
+        elif all_server_details:
+            log.stdout.write(f"{'PID':<8}  project\n")
+            for details in all_server_details:
+                log.stdout.write(f"{details.pid:<8}  {details.name}\n")
         else:
-            if len(all_server_details) > 0:
-                log.stdout.write(f"{'PID':<8}  project\n")
-                for details in all_server_details:
-                    log.stdout.write(f"{details.pid:<8}  {details.name}\n")
-            else:
-                log.stdout.write("No servers running")
+            log.stdout.write("No servers running")
 
     def _find_servers(self) -> List[Path]:
         return list(self._configuration.dot_pyre_directory.glob("**/server.pid"))

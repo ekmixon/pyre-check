@@ -89,8 +89,7 @@ class Incremental(Reporting):
                     if exit_code != ExitCode.SUCCESS:
                         self._exit_code = ExitCode.FAILURE
                         raise ClientInitializationError
-            else:
-                if not self._no_watchman and (
+            elif not self._no_watchman and (
                     not project_files_monitor.ProjectFilesMonitor.is_alive(
                         self._configuration
                     )
@@ -98,14 +97,14 @@ class Incremental(Reporting):
                         self._configuration
                     )
                 ):
-                    LOG.warning(
-                        "Pyre's file watching service is down."
-                        + " Results may be inconsistent with full checks."
-                        + " Please run `pyre restart` to bring Pyre server to a "
-                        + "consistent state again."
-                    )
-                    self._exit_code = ExitCode.INCONSISTENT_SERVER
-                    raise ClientInitializationError
+                LOG.warning(
+                    "Pyre's file watching service is down."
+                    + " Results may be inconsistent with full checks."
+                    + " Please run `pyre restart` to bring Pyre server to a "
+                    + "consistent state again."
+                )
+                self._exit_code = ExitCode.INCONSISTENT_SERVER
+                raise ClientInitializationError
 
     def _run(self) -> None:
         try:
@@ -136,13 +135,12 @@ class Incremental(Reporting):
             ]
         )
 
-        search_path = [
+        if search_path := [
             search_path.command_line_argument()
             for search_path in (
                 self._configuration.expand_and_get_existent_search_paths()
             )
-        ]
-        if search_path:
+        ]:
             flags.extend(["-search-path", ",".join(search_path)])
 
         excludes = self._configuration.excludes

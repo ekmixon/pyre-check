@@ -188,13 +188,18 @@ def write_output(trim_result: TypeshedPatchingResult, output: str) -> None:
 def _find_entry(typeshed_path: Path, entries: List[FileEntry]) -> Optional[FileEntry]:
     """Finds a particular entry in typeshed, given its path relative to
     `typeshed-master`, possibly while having a different suffix."""
-    for entry in entries:
-        if (
-            entry.path == f"typeshed-master/{typeshed_path.with_suffix('.pyi')}"
-            and entry.data is not None
-        ):
-            return entry
-    return None
+    return next(
+        (
+            entry
+            for entry in entries
+            if (
+                entry.path
+                == f"typeshed-master/{typeshed_path.with_suffix('.pyi')}"
+                and entry.data is not None
+            )
+        ),
+        None,
+    )
 
 
 def _patch_entry(

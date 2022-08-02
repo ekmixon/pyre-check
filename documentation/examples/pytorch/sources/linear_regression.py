@@ -34,11 +34,7 @@ def make_features(x: Tensor[DType, [N]]) -> Tensor[DType, [N, D4]]:
     """Builds features i.e. a matrix with columns [x, x^2, x^3, x^4]."""
     # x = x.unsqueeze(1)
     x2 = torch.unsqueeze(x, 1)
-    # return torch.cat([x ** i for i in range(1, POLY_DEGREE+1)], 1)
-    r: Tensor[DType, [N, D4]] = torch.cat(
-        [x2 ** i for i in range(1, POLY_DEGREE + 1)], 1
-    )
-    return r
+    return torch.cat([x2**i for i in range(1, POLY_DEGREE + 1)], 1)
 
 
 def f(x: Tensor[float32, [N, D4]]) -> Tensor[float32, [N, D1]]:

@@ -88,8 +88,6 @@ class RageTest(unittest.TestCase):
         self.assert_output(stdout)
 
     @patch.object(recently_used_configurations.Cache, "get_all_items", return_value=[])
-    # pyre-fixme[56]: Argument `tools.pyre.client.filesystem` to decorator factory
-    #  `unittest.mock.patch.object` could not be resolved in a global scope.
     @patch.object(filesystem, "acquire_lock")
     @patch("subprocess.run")
     @patch.object(
@@ -122,9 +120,7 @@ class RageTest(unittest.TestCase):
         output_path: str = "/output"
 
         def _open(file: str, mode: str) -> IO[str]:
-            if file == output_path:
-                return outer_output_file
-            return MagicMock()
+            return outer_output_file if file == output_path else MagicMock()
 
         with patch("builtins.open", side_effect=_open) as open:
             Rage(

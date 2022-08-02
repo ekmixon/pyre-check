@@ -325,7 +325,7 @@ def _run_in_foreground(
     # In foreground mode, we shell out to the backend server and block on it.
     # Server stdout/stderr will be forwarded to the current terminal.
     return_code = 0
-    try:
+    with contextlib.suppress(KeyboardInterrupt):
         LOG.warning("Starting server in the foreground...")
         result = subprocess.run(
             command,
@@ -335,15 +335,10 @@ def _run_in_foreground(
             universal_newlines=True,
         )
         return_code = result.returncode
-    except KeyboardInterrupt:
-        # Backend server will exit cleanly when receiving SIGINT.
-        pass
-
     if return_code == 0:
         return commands.ExitCode.SUCCESS
-    else:
-        LOG.error(f"Server exited with non-zero return code: {return_code}")
-        return commands.ExitCode.FAILURE
+    LOG.error(f"Server exited with non-zero return code: {return_code}")
+    return commands.ExitCode.FAILURE
 
 
 @contextlib.contextmanager
@@ -355,10 +350,8 @@ def background_logging(log_file: Path) -> Iterator[None]:
 
 
 def _create_symbolic_link(source: Path, target: Path) -> None:
-    try:
+    with contextlib.suppress(FileNotFoundError):
         source.unlink()
-    except FileNotFoundError:
-        pass
     source.symlink_to(target)
 
 

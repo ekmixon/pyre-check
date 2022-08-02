@@ -1045,8 +1045,6 @@ class SharedAnalysisDirectoryTest(unittest.TestCase):
     @patch.object(filesystem, "is_empty", return_value=False)
     @patch.object(os, "symlink")
     @patch.object(subprocess, "check_output")
-    # pyre-fixme[56]: Pyre was not able to infer the type of argument `os` to
-    #  decorator factory `unittest.mock.patch.object`.
     @patch.object(os, "makedirs")
     @patch.object(os.path, "exists")
     @patch.object(os.path, "realpath")
@@ -1100,14 +1098,15 @@ class SharedAnalysisDirectoryTest(unittest.TestCase):
         shared_analysis_directory._merge()
         shared_root = shared_analysis_directory.get_root()
         os_makedirs.assert_has_calls(
-            [call(shared_root), call(shared_root + "/b")], any_order=True
+            [call(shared_root), call(f"{shared_root}/b")], any_order=True
         )
+
         os_symlink.assert_has_calls(
             [
-                call(root + "/first/x.py", shared_root + "/x.py"),
-                call(root + "/first/y.py", shared_root + "/y.py"),
-                call(root + "/first/b/z.py", shared_root + "/b/z.py"),
-                call(root + "/second/a.py", shared_root + "/a.py"),
+                call(f"{root}/first/x.py", f"{shared_root}/x.py"),
+                call(f"{root}/first/y.py", f"{shared_root}/y.py"),
+                call(f"{root}/first/b/z.py", f"{shared_root}/b/z.py"),
+                call(f"{root}/second/a.py", f"{shared_root}/a.py"),
             ],
             any_order=True,
         )

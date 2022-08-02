@@ -114,14 +114,10 @@ class PersistentTest(unittest.TestCase):
             }
         }
         """
-        stdin = io.StringIO(
-            "Content-Length: {}\r\n\r\n{}\r\n".format(len(input), input)
-        )
+        stdin = io.StringIO(f"Content-Length: {len(input)}\r\n\r\n{input}\r\n")
 
         select.return_value = ([stdin], [], [])
         # Check null server output when a valid input is given.
         commands.Persistent.run_null_server(timeout=0)
         json = '{"id": 0, "jsonrpc": "2.0", "result": {"capabilities": {}}}'
-        self.assertEqual(
-            stdout.getvalue(), "Content-Length: 59\r\n\r\n{}\r\n".format(json)
-        )
+        self.assertEqual(stdout.getvalue(), f"Content-Length: 59\r\n\r\n{json}\r\n")

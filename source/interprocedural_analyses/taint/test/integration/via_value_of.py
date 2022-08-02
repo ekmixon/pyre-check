@@ -48,8 +48,7 @@ def tito(parameter, other):
 
 
 def test_tito():
-    a = tito(_test_source(), "second")
-    return a
+    return tito(_test_source(), "second")
 
 
 def sink_via_value_of(x, y):

@@ -81,12 +81,12 @@ class Pyre:
 
         # TODO(T82114844): incremental is borked on Ubuntu 20.04.
         with subprocess.Popen(
-            ["pyre", "--output=json", "--noninteractive", "check"],
-            stderr=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            cwd=self._directory,
-            text=True,
-        ) as process:
+                ["pyre", "--output=json", "--noninteractive", "check"],
+                stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                cwd=self._directory,
+                text=True,
+            ) as process:
             # pyre-fixme[6]: Expected `IO[bytes]` for 1st param but got
             #  `Optional[IO[typing.Any]]`.
             stderr = _consume(process.stderr)
@@ -97,12 +97,10 @@ class Pyre:
 
             if return_code > 1:
                 LOG.error(f"Returning error: {stderr}")
-                result = jsonify(errors=[stderr])
+                return jsonify(errors=[stderr])
             else:
                 errors = json.loads(stdout)
-                result = jsonify(data={"errors": errors, "stderr": stderr})
-
-            return result
+                return jsonify(data={"errors": errors, "stderr": stderr})
 
 
 pyre = Pyre()

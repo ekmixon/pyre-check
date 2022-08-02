@@ -249,7 +249,7 @@ class FilesystemTest(unittest.TestCase):
     @patch.object(tempfile, "mkdtemp", return_value="/tmp/pyre_tmp_xyz")
     @patch.object(buck, "find_buck_root", return_value="/buck_root")
     @patch("os.makedirs")
-    @patch(filesystem_name + ".acquire_lock")
+    @patch(f"{filesystem_name}.acquire_lock")
     @patch.object(SharedAnalysisDirectory, "get_root", return_value="/analysis_root")
     def test_prepare(
         self,

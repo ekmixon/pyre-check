@@ -21,7 +21,7 @@ from .command_test import mock_arguments, mock_configuration
 
 
 class RestartTest(unittest.TestCase):
-    @patch("{}.ProjectFilesMonitor".format(project_files_monitor.__name__))
+    @patch(f"{project_files_monitor.__name__}.ProjectFilesMonitor")
     @patch.object(restart, "Start")
     @patch.object(restart, "Stop")
     @patch.object(restart, "Incremental")

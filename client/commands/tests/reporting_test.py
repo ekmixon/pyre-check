@@ -139,23 +139,6 @@ class ReportingTest(unittest.TestCase):
 
         return
 
-        # Test wildcard in do not check
-        original_directory = "/"  # called from
-        find_global_and_local_root.return_value = find_directories.FoundRoot(Path("/"))
-        configuration.ignore_all_errors = ["*/b"]
-        handler = commands.Reporting(
-            arguments,
-            original_directory,
-            configuration,
-            AnalysisDirectory(configuration_module.SimpleSearchPathElement("/a")),
-        )
-        json_errors["errors"][0]["path"] = "b/c.py"
-        with patch.object(json, "loads", return_value=copy.deepcopy(json_errors)):
-            errors = handler._get_errors(result)
-            self.assertEqual(len(errors), 1)
-            [error] = errors
-            self.assertTrue(error.ignore_error)
-
     @patch.object(json, "loads")
     def test_load_errors_from_json(self, loads: MagicMock) -> None:
         error_list = [{"one": 1}, {"two": 2}]
@@ -188,7 +171,7 @@ class ReportingTest(unittest.TestCase):
             commands.Reporting._load_errors_from_json("<some json string>")
 
     @patch.object(subprocess, "run")
-    @patch("{}.find_global_and_local_root".format(find_directories.__name__))
+    @patch(f"{find_directories.__name__}.find_global_and_local_root")
     def test_get_directories_to_analyze(self, find_global_and_local_root, run) -> None:
         original_directory = "/"
         find_global_and_local_root.return_value = find_directories.FoundRoot(
